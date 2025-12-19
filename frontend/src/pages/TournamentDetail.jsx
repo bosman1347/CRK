@@ -102,25 +102,11 @@ const TournamentDetail = () => {
               <h1 className="text-4xl md:text-5xl font-heading mb-2" data-testid="tournament-name">{tournament.name}</h1>
               <p className="text-lg text-emerald-100">Round {tournament.current_round} of 7</p>
             </div>
-            {tournament.status === 'setup' && (
-              <Button
-                onClick={startTournament}
-                className="bg-white text-primary hover:bg-emerald-50"
-                data-testid="start-tournament-button"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                Start Tournament
-              </Button>
-            )}
-            {canGenerateNextRound && (
-              <Button
-                onClick={generateNextRound}
-                className="bg-white text-primary hover:bg-emerald-50"
-                data-testid="next-round-button"
-              >
-                <ChevronRight className="w-4 h-4 mr-2" />
-                Generate Round {tournament.current_round + 1}
-              </Button>
+            {tournament.status === 'setup' && tournament.umpire_name && (
+              <div className="text-right">
+                <p className="text-emerald-100 text-sm">Umpire: {tournament.umpire_name}</p>
+                <p className="text-emerald-200 text-xs">Waiting for umpire to start tournament</p>
+              </div>
             )}
           </div>
         </div>
