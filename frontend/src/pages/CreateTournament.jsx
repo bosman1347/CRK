@@ -70,8 +70,24 @@ const CreateTournament = () => {
         { headers: getAuthHeader() }
       );
       
-      toast.success('Tournament created successfully!');
-      navigate(`/tournaments/${response.data.id}`);
+      const data = response.data;
+      
+      // Check if umpire was auto-created
+      if (data.umpire_created && data.umpire_credentials) {
+        const creds = data.umpire_credentials;
+        const message = `Tournament created! New umpire account created:\n\nEmail: ${creds.email}\nPassword: ${creds.temporary_password}\n\nPlease share these credentials with the umpire securely. They can change the password after first login.`;
+        
+        // Show longer toast with credentials
+        toast.success(message, { duration: 15000 });
+        
+        // Also copy to clipboard
+        navigator.clipboard.writeText(`Umpire Login:\nEmail: ${creds.email}\nPassword: ${creds.temporary_password}`);
+        toast.info('Credentials copied to clipboard!', { duration: 3000 });
+      } else {
+        toast.success('Tournament created successfully!');
+      }
+      
+      navigate(`/tournaments/${data.tournament.id}`);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to create tournament');
     } finally {
