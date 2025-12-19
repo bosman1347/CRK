@@ -11,6 +11,7 @@ import UmpireDashboard from './pages/UmpireDashboard';
 import UmpireTournament from './pages/UmpireTournament';
 import PublicStandings from './pages/PublicStandings';
 import PublicSummary from './pages/PublicSummary';
+import Settings from './pages/Settings';
 import '@/App.css';
 
 const PrivateRoute = ({ children }) => {
