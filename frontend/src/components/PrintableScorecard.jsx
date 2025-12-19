@@ -58,17 +58,19 @@ const PrintableScorecard = ({ round, matches, qrUrl, tournamentName }) => {
         }
       `}</style>
       
-      {matches.map((match, index) => (
-        <div key={match.id} className="scorecard-page" style={{ padding: '10mm' }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '15px', borderBottom: '2px solid #000', paddingBottom: '10px' }}>
-            <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 5px 0', fontFamily: 'serif' }}>
-              {tournamentName}
-            </h1>
-            <p style={{ fontSize: '16px', margin: '0', fontWeight: '600' }}>
-              Round {round.round_number} Scorecard
-            </p>
-          </div>
+      {matchPairs.map((pair, pairIndex) => (
+        <div key={pairIndex} className="scorecard-pair">
+          {pair.map((match, index) => (
+            <div key={match.id} className="scorecard-single">
+              {/* Header */}
+              <div style={{ textAlign: 'center', marginBottom: '10px', borderBottom: '2px solid #000', paddingBottom: '8px' }}>
+                <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 3px 0', fontFamily: 'serif' }}>
+                  {tournamentName}
+                </h1>
+                <p style={{ fontSize: '13px', margin: '0', fontWeight: '600' }}>
+                  Round {round.round_number} Scorecard
+                </p>
+              </div>
 
           {/* Match Details */}
           <div style={{ marginBottom: '15px', fontSize: '14px' }}>
