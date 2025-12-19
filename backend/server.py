@@ -79,6 +79,9 @@ class Team(BaseModel):
     total_points: float
     matches_played: int
     matches_won: int
+    shots_for: int = 0
+    shots_against: int = 0
+    shot_difference: int = 0
 
 class Round(BaseModel):
     model_config = ConfigDict(extra="ignore")
