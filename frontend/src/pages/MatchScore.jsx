@@ -1,128 +1,78 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { toast } from 'sonner';
-import { ArrowLeft, Save, Trophy } from 'lucide-react';
+import { Save, Trophy, CheckCircle } from 'lucide-react';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const MatchScore = () => {
-  const { id } = useParams();
+  const { token } = useParams();
   const [match, setMatch] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [selectedSkin, setSelectedSkin] = useState(1);
-  const [skinScores, setSkinScores] = useState({
-    1: { team1: '', team2: '' },
-    2: { team1: '', team2: '' },
-    3: { team1: '', team2: '' }
+  const [selectedTeam, setSelectedTeam] = useState('');
+  const [scores, setScores] = useState({
+    skin1: '',
+    skin2: '',
+    skin3: ''
   });
-  const { getAuthHeader } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchMatch();
-  }, [id]);
+  }, [token]);
 
   const fetchMatch = async () => {
     try {
-      const response = await axios.get(`${API}/matches/${id}`, { headers: getAuthHeader() });
-      const matchData = response.data;
-      setMatch(matchData);
-
-      // Populate existing scores
-      setSkinScores({
-        1: {
-          team1: matchData.skin1_team1_shots !== null ? matchData.skin1_team1_shots.toString() : '',
-          team2: matchData.skin1_team2_shots !== null ? matchData.skin1_team2_shots.toString() : ''
-        },
-        2: {
-          team1: matchData.skin2_team1_shots !== null ? matchData.skin2_team1_shots.toString() : '',
-          team2: matchData.skin2_team2_shots !== null ? matchData.skin2_team2_shots.toString() : ''
-        },
-        3: {
-          team1: matchData.skin3_team1_shots !== null ? matchData.skin3_team1_shots.toString() : '',
-          team2: matchData.skin3_team2_shots !== null ? matchData.skin3_team2_shots.toString() : ''
-        }
-      });
-
-      // Set selected skin to first incomplete one
-      if (matchData.completed_skins < 3) {
-        setSelectedSkin(matchData.completed_skins + 1);
-      }
+      const response = await axios.get(`${API}/matches/by-token/${token}`);
+      setMatch(response.data);
     } catch (error) {
-      toast.error('Failed to load match');
+      toast.error('Match not found or invalid link');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSkinScoreChange = (skin, team, value) => {
-    setSkinScores(prev => ({
-      ...prev,
-      [skin]: {
-        ...prev[skin],
-        [team]: value
-      }
-    }));
+  const handleScoreChange = (skin, value) => {
+    setScores(prev => ({ ...prev, [skin]: value }));
   };
 
-  const saveSkinScores = async (skinNumber) => {
-    const team1Score = parseInt(skinScores[skinNumber].team1);
-    const team2Score = parseInt(skinScores[skinNumber].team2);
-
-    if (isNaN(team1Score) || isNaN(team2Score)) {
-      toast.error('Please enter valid scores for both teams');
+  const submitScore = async (skinNumber) => {
+    if (!selectedTeam) {
+      toast.error('Please select your team first');
       return;
     }
 
-    if (team1Score < 0 || team2Score < 0) {
-      toast.error('Scores cannot be negative');
+    const teamNumber = selectedTeam === match.team1_name ? 1 : 2;
+    const shotValue = parseInt(scores[`skin${skinNumber}`]);
+
+    if (isNaN(shotValue) || shotValue < 0) {
+      toast.error('Please enter a valid score (0 or greater)');
       return;
     }
 
-    setSaving(true);
     try {
-      await axios.put(
-        `${API}/matches/${id}/scores`,
-        {
-          skin_number: skinNumber,
-          team1_shots: team1Score,
-          team2_shots: team2Score
-        },
-        { headers: getAuthHeader() }
-      );
-
-      toast.success(`Skin ${skinNumber} scores saved!`);
+      await axios.post(`${API}/matches/by-token/${token}/scores`, {
+        team_number: teamNumber,
+        skin_number: skinNumber,
+        shots: shotValue
+      });
+      toast.success(`Skin ${skinNumber} score submitted!`);
       fetchMatch();
-
-      // If not the last skin, move to next
-      if (skinNumber < 3) {
-        setSelectedSkin(skinNumber + 1);
-      }
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to save scores');
-    } finally {
-      setSaving(false);
+      toast.error(error.response?.data?.detail || 'Failed to submit score');
     }
   };
 
-  const getSkinWinner = (skin) => {
-    const team1 = parseInt(skinScores[skin].team1);
-    const team2 = parseInt(skinScores[skin].team2);
-
-    if (isNaN(team1) || isNaN(team2)) return null;
-
-    if (team1 > team2) return match.team1_name;
-    if (team2 > team1) return match.team2_name;
-    return 'Draw';
+  const getScoreForTeamAndSkin = (teamNum, skinNum) => {
+    const field = `skin${skinNum}_team${teamNum}_shots`;
+    return match[field];
   };
 
   const getRinkColor = (green) => {
@@ -131,7 +81,7 @@ const MatchScore = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <p>Loading match...</p>
       </div>
     );
@@ -139,28 +89,62 @@ const MatchScore = () => {
 
   if (!match) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Match not found</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardContent className="py-12 text-center">
+            <h3 className="text-xl font-heading mb-2">Match Not Found</h3>
+            <p className="text-muted-foreground">Invalid or expired QR code</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  const isCompleted = match.status === 'completed';
+  if (match.verified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="max-w-md w-full border-green-200">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl font-heading">Match Verified</CardTitle>
+            <CardDescription>This match has been verified by the umpire</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-4 bg-stone-50 rounded-lg">
+                <div>
+                  <p className="font-semibold">{match.team1_name}</p>
+                  <p className="text-xs text-muted-foreground">{match.team1_skin_points.toFixed(1)} skin points</p>
+                </div>
+                <p className="text-2xl font-mono font-bold text-primary">{match.team1_match_points.toFixed(1)}</p>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-stone-50 rounded-lg">
+                <div>
+                  <p className="font-semibold">{match.team2_name}</p>
+                  <p className="text-xs text-muted-foreground">{match.team2_skin_points.toFixed(1)} skin points</p>
+                </div>
+                <p className="text-2xl font-mono font-bold text-primary">{match.team2_match_points.toFixed(1)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const teamNumber = selectedTeam === match.team1_name ? 1 : 2;
+  const hasEnteredScores = teamNumber === 1 ? match.team1_scores_entered : match.team2_scores_entered;
+  const otherTeamEntered = teamNumber === 1 ? match.team2_scores_entered : match.team1_scores_entered;
 
   return (
     <div className="min-h-screen bg-background">
       <div className="gradient-hero text-white py-12">
         <div className="container mx-auto px-6">
-          <Button
-            onClick={() => navigate(`/tournaments/${match.tournament_id}`)}
-            variant="ghost"
-            className="text-white hover:bg-white/10 mb-4"
-            data-testid="back-button"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Tournament
-          </Button>
-          <h1 className="text-4xl md:text-5xl font-heading mb-4" data-testid="match-title">Match Scorecard</h1>
+          <h1 className="text-4xl md:text-5xl font-heading mb-4" data-testid="match-title">Score Entry</h1>
           <div className="flex gap-3">
             <Badge className={`rink-badge text-base ${getRinkColor(match.green)}`}>
               Green {match.green}
@@ -173,153 +157,133 @@ const MatchScore = () => {
       </div>
 
       <div className="container mx-auto px-6 py-12">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Teams Display */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="max-w-2xl mx-auto space-y-6">
+          {/* Team Selection */}
+          {!selectedTeam && (
             <Card className="floating-card border-stone-200">
-              <CardContent className="pt-6">
-                <h3 className="text-xl font-heading mb-2" data-testid="team1-name">{match.team1_name}</h3>
-                {isCompleted && (
-                  <div>
-                    <p className="text-3xl font-mono font-bold text-primary" data-testid="team1-points">
-                      {match.team1_match_points.toFixed(1)} pts
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {match.team1_skin_points.toFixed(1)} skin points
-                    </p>
+              <CardHeader>
+                <CardTitle className="text-2xl font-heading">Select Your Team</CardTitle>
+                <CardDescription>Choose which team you are entering scores for</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup value={selectedTeam} onValueChange={setSelectedTeam}>
+                  <div className="flex items-center space-x-2 p-4 border rounded-lg cursor-pointer hover:bg-stone-50" data-testid="team1-radio">
+                    <RadioGroupItem value={match.team1_name} id="team1" />
+                    <Label htmlFor="team1" className="flex-1 cursor-pointer">
+                      <span className="text-lg font-semibold">{match.team1_name}</span>
+                      {match.team1_scores_entered && (
+                        <Badge className="ml-2 bg-blue-100 text-blue-700 text-xs">Scores Entered</Badge>
+                      )}
+                    </Label>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="floating-card border-stone-200">
-              <CardContent className="pt-6">
-                <h3 className="text-xl font-heading mb-2" data-testid="team2-name">{match.team2_name}</h3>
-                {isCompleted && (
-                  <div>
-                    <p className="text-3xl font-mono font-bold text-primary" data-testid="team2-points">
-                      {match.team2_match_points.toFixed(1)} pts
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {match.team2_skin_points.toFixed(1)} skin points
-                    </p>
+                  <div className="flex items-center space-x-2 p-4 border rounded-lg cursor-pointer hover:bg-stone-50" data-testid="team2-radio">
+                    <RadioGroupItem value={match.team2_name} id="team2" />
+                    <Label htmlFor="team2" className="flex-1 cursor-pointer">
+                      <span className="text-lg font-semibold">{match.team2_name}</span>
+                      {match.team2_scores_entered && (
+                        <Badge className="ml-2 bg-blue-100 text-blue-700 text-xs">Scores Entered</Badge>
+                      )}
+                    </Label>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {isCompleted && (
-            <Card className="gradient-gold text-white border-amber-500">
-              <CardContent className="py-6 text-center">
-                <Trophy className="w-12 h-12 mx-auto mb-3" />
-                <h3 className="text-2xl font-heading mb-2">Match Complete!</h3>
-                <p className="text-lg">
-                  Winner: <span className="font-bold">
-                    {match.team1_match_points > match.team2_match_points ? match.team1_name :
-                     match.team2_match_points > match.team1_match_points ? match.team2_name :
-                     'Draw'}
-                  </span>
-                </p>
+                </RadioGroup>
               </CardContent>
             </Card>
           )}
 
-          {/* Skin Tabs */}
-          <Card className="floating-card border-stone-200">
-            <CardHeader>
-              <CardTitle className="text-2xl font-heading">Score Entry</CardTitle>
-              <CardDescription>
-                Enter shot totals after each 5-end skin. The app calculates points automatically.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Skin Selector */}
-              <div className="flex gap-2" data-testid="skin-selector">
-                {[1, 2, 3].map((skin) => (
-                  <Button
-                    key={skin}
-                    onClick={() => setSelectedSkin(skin)}
-                    variant={selectedSkin === skin ? 'default' : 'outline'}
-                    className={selectedSkin === skin ? 'bg-primary' : ''}
-                    data-testid={`skin-tab-${skin}`}
-                  >
-                    Skin {skin}
-                    {match[`skin${skin}_team1_shots`] !== null && ' ✓'}
-                  </Button>
-                ))}
-              </div>
-
-              {/* Score Input for Selected Skin */}
-              <div className="space-y-6" data-testid={`skin-${selectedSkin}-content`}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label htmlFor={`team1-skin${selectedSkin}`} className="text-lg">
-                      {match.team1_name}
-                    </Label>
-                    <Input
-                      id={`team1-skin${selectedSkin}`}
-                      type="number"
-                      min="0"
-                      placeholder="Shots scored"
-                      value={skinScores[selectedSkin].team1}
-                      onChange={(e) => handleSkinScoreChange(selectedSkin, 'team1', e.target.value)}
-                      disabled={isCompleted}
-                      className="score-input text-center border-stone-300"
-                      data-testid={`team1-skin${selectedSkin}-input`}
-                    />
+          {/* Score Entry */}
+          {selectedTeam && (
+            <Card className="floating-card border-stone-200">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-2xl font-heading">Enter Your Scores</CardTitle>
+                    <CardDescription>Team: {selectedTeam}</CardDescription>
                   </div>
-
-                  <div className="space-y-3">
-                    <Label htmlFor={`team2-skin${selectedSkin}`} className="text-lg">
-                      {match.team2_name}
-                    </Label>
-                    <Input
-                      id={`team2-skin${selectedSkin}`}
-                      type="number"
-                      min="0"
-                      placeholder="Shots scored"
-                      value={skinScores[selectedSkin].team2}
-                      onChange={(e) => handleSkinScoreChange(selectedSkin, 'team2', e.target.value)}
-                      disabled={isCompleted}
-                      className="score-input text-center border-stone-300"
-                      data-testid={`team2-skin${selectedSkin}-input`}
-                    />
+                  {otherTeamEntered && (
+                    <Badge className="bg-blue-100 text-blue-700">Other team has entered</Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {hasEnteredScores && (
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-sm text-blue-900">✓ You have already entered scores. You can modify them below if needed.</p>
                   </div>
+                )}
+
+                {[1, 2, 3].map((skinNum) => {
+                  const existingScore = getScoreForTeamAndSkin(teamNumber, skinNum);
+                  return (
+                    <div key={skinNum} className="space-y-3" data-testid={`skin${skinNum}-section`}>
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-lg">Skin {skinNum}</h4>
+                        {existingScore !== null && (
+                          <Badge className="bg-green-100 text-green-700">Entered: {existingScore}</Badge>
+                        )}
+                      </div>
+                      <div className="flex gap-3">
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="Enter shots scored"
+                          value={scores[`skin${skinNum}`]}
+                          onChange={(e) => handleScoreChange(`skin${skinNum}`, e.target.value)}
+                          className="score-input flex-1"
+                          data-testid={`skin${skinNum}-input`}
+                        />
+                        <Button
+                          onClick={() => submitScore(skinNum)}
+                          className="bg-primary hover:bg-primary/90"
+                          data-testid={`submit-skin${skinNum}-button`}
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Submit
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <h5 className="font-semibold text-sm text-amber-900 mb-2">Important</h5>
+                  <ul className="text-xs text-amber-800 space-y-1">
+                    <li>• Enter the total shots your team scored in each 5-end skin</li>
+                    <li>• You can modify scores until the umpire verifies the match</li>
+                    <li>• The umpire will review both teams' entries before final verification</li>
+                  </ul>
                 </div>
 
-                {getSkinWinner(selectedSkin) && (
-                  <div className="p-4 bg-primary/10 rounded-lg text-center">
-                    <p className="text-sm font-medium text-muted-foreground">Skin {selectedSkin} Winner</p>
-                    <p className="text-lg font-bold text-primary" data-testid={`skin${selectedSkin}-winner`}>
-                      {getSkinWinner(selectedSkin)}
-                    </p>
-                  </div>
-                )}
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedTeam('')}
+                  className="w-full"
+                  data-testid="change-team-button"
+                >
+                  Change Team
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
-                {!isCompleted && (
-                  <Button
-                    onClick={() => saveSkinScores(selectedSkin)}
-                    disabled={saving}
-                    className="w-full bg-primary hover:bg-primary/90"
-                    data-testid={`save-skin${selectedSkin}-button`}
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    {saving ? 'Saving...' : `Save Skin ${selectedSkin} Scores`}
-                  </Button>
-                )}
-              </div>
-
-              {/* Info Box */}
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <h4 className="font-semibold text-sm text-blue-900 mb-2">Scoring Rules</h4>
-                <ul className="text-xs text-blue-800 space-y-1">
-                  <li>• Each match has 3 skins (5 ends each)</li>
-                  <li>• Team with most shots in a skin wins 1 point (0.5 each if draw)</li>
-                  <li>• After 3 skins: team with most skin points gets +2 bonus</li>
-                  <li>• If skin points tied: bonus goes to team with most total shots</li>
-                  <li>• Total of 5 match points available per match</li>
-                </ul>
+          {/* Match Info */}
+          <Card className="floating-card border-stone-200">
+            <CardHeader>
+              <CardTitle className="text-xl font-heading">Match Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Teams:</span>
+                  <span className="font-medium">{match.team1_name} vs {match.team2_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Location:</span>
+                  <span className="font-medium">Green {match.green}, Rink {match.rink}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Status:</span>
+                  <span className="font-medium">Awaiting Verification</span>
+                </div>
               </div>
             </CardContent>
           </Card>
