@@ -358,14 +358,42 @@ async def login(user_data: UserLogin):
     return Token(access_token=access_token, token_type="bearer", user=user_obj)
 
 # Tournament routes
-@api_router.post("/tournaments", response_model=Tournament)
+@api_router.post("/tournaments")
 async def create_tournament(tournament_data: TournamentCreate, current_user: User = Depends(get_current_user)):
-    # Find umpire
-    umpire = await db.users.find_one({"email": tournament_data.umpire_email, "is_umpire": True}, {"_id": 0})
-    if not umpire:
-        raise HTTPException(status_code=400, detail="Umpire not found or user is not an umpire")
-    
     import uuid
+    
+    # Check if umpire exists
+    umpire = await db.users.find_one({"email": tournament_data.umpire_email}, {"_id": 0})
+    
+    umpire_created = False
+    temp_password = None
+    
+    if not umpire:
+        # Auto-create umpire account
+        temp_password = secrets.token_urlsafe(12)
+        umpire_id = str(uuid.uuid4())
+        umpire_name = tournament_data.umpire_email.split('@')[0].title()
+        
+        umpire_doc = {
+            "id": umpire_id,
+            "email": tournament_data.umpire_email,
+            "password_hash": get_password_hash(temp_password),
+            "name": umpire_name,
+            "is_umpire": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.users.insert_one(umpire_doc)
+        
+        umpire = umpire_doc
+        umpire_created = True
+    elif not umpire.get("is_umpire", False):
+        # User exists but not an umpire - promote them
+        await db.users.update_one(
+            {"email": tournament_data.umpire_email},
+            {"$set": {"is_umpire": True}}
+        )
+        umpire["is_umpire"] = True
+    
     tournament_id = str(uuid.uuid4())
     
     tournament_doc = {
@@ -394,7 +422,19 @@ async def create_tournament(tournament_data: TournamentCreate, current_user: Use
         }
         await db.teams.insert_one(team_doc)
     
-    return Tournament(**tournament_doc)
+    response = {
+        "tournament": Tournament(**tournament_doc),
+        "umpire_created": umpire_created
+    }
+    
+    if umpire_created:
+        response["umpire_credentials"] = {
+            "email": tournament_data.umpire_email,
+            "temporary_password": temp_password,
+            "message": "Share these credentials with the umpire. They can change the password after first login."
+        }
+    
+    return response
 
 @api_router.get("/tournaments", response_model=List[Tournament])
 async def get_tournaments(current_user: User = Depends(get_current_user)):
