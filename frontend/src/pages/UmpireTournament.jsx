@@ -247,30 +247,7 @@ const UmpireTournament = () => {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" className="w-full" data-testid={`qr-button-${match.id}`}>
-                                <QrCode className="w-4 h-4 mr-2" />
-                                Show QR Code
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-md">
-                              <DialogHeader>
-                                <DialogTitle>Match QR Code</DialogTitle>
-                                <DialogDescription>
-                                  Teams scan this code to enter scores
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="flex flex-col items-center space-y-4 py-4">
-                                <QRCodeSVG value={`${FRONTEND_URL}/match/${match.access_token}`} size={256} />
-                                <div className="text-center">
-                                  <p className="text-sm font-medium">{match.team1_name} vs {match.team2_name}</p>
-                                  <p className="text-xs text-muted-foreground">Green {match.green} - Rink {match.rink}</p>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                        <div className="print:hidden">
 
                           {!match.verified && (
                             <Button
