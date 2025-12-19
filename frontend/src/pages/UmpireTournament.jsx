@@ -113,10 +113,19 @@ const UmpireTournament = () => {
   };
 
   const printDraw = () => {
-    // Hide everything except scorecards
-    document.body.classList.add('printing-scorecards');
-    window.print();
-    document.body.classList.remove('printing-scorecards');
+    if (!currentRoundData || !currentRoundData.access_token) {
+      toast.error('Round data not loaded. Please refresh the page.');
+      return;
+    }
+    if (matches.length === 0) {
+      toast.error('No matches to print');
+      return;
+    }
+    
+    // Trigger print
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   const getRinkColor = (green) => {
