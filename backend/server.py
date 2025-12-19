@@ -525,7 +525,6 @@ async def umpire_generate_round(tournament_id: str, current_user: User = Depends
     
     for match_data in matches:
         match_id = str(uuid.uuid4())
-        access_token = secrets.token_urlsafe(32)
         match_doc = {
             "id": match_id,
             "round_id": round_id,
@@ -536,7 +535,6 @@ async def umpire_generate_round(tournament_id: str, current_user: User = Depends
             "team2_name": match_data["team2"]["name"],
             "green": match_data["green"],
             "rink": match_data["rink"],
-            "access_token": access_token,
             "skin1_team1_shots": None,
             "skin1_team2_shots": None,
             "skin2_team1_shots": None,
