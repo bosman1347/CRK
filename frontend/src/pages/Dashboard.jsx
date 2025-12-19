@@ -66,15 +66,26 @@ const Dashboard = () => {
                 </Button>
               )}
             </div>
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="bg-white/10 text-white border-white/30 hover:bg-white/20"
-              data-testid="logout-button"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => navigate('/settings')}
+                variant="outline"
+                className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+                data-testid="settings-button"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </Button>
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+                data-testid="logout-button"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </div>
