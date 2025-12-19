@@ -1,0 +1,139 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "BowlsManager Pro",
+      "persona": "The Modern Clubhouse",
+      "vibe": "Heritage meets Precision. Think Wimbledon aesthetics with modern SaaS usability.",
+      "principles": [
+        "Clarity under Pressure: Score entry must be instant and error-proof.",
+        "Visual Hierarchy: The Leaderboard is the hero.",
+        "Green is the Anchor: Use emerald tones to ground the design, but keep data on white.",
+        "Mobile First: Players are on the green, not at a desk."
+      ]
+    },
+    "typography": {
+      "headings": {
+        "family": "Playfair Display, serif",
+        "usage": "Page titles, Tournament names, Winner announcements",
+        "weights": ["600", "700"],
+        "letterSpacing": "-0.02em"
+      },
+      "body": {
+        "family": "Inter, sans-serif",
+        "usage": "General UI, forms, instructions",
+        "weights": ["400", "500"]
+      },
+      "data": {
+        "family": "JetBrains Mono, monospace",
+        "usage": "Scores, Skin points, Rink numbers, Time",
+        "weights": ["500"]
+      }
+    },
+    "colors": {
+      "palette": {
+        "primary": {
+          "DEFAULT": "#15803d",
+          "foreground": "#ffffff",
+          "description": "Emerald 700 - The Green"
+        },
+        "secondary": {
+          "DEFAULT": "#f59e0b",
+          "foreground": "#1c1917",
+          "description": "Amber 500 - Victory/Skins/Bonus"
+        },
+        "accent": {
+          "DEFAULT": "#be123c",
+          "foreground": "#ffffff",
+          "description": "Rose 700 - Alerts/Losses"
+        },
+        "background": {
+          "DEFAULT": "#fafaf9",
+          "description": "Stone 50 - Clubhouse Cream"
+        },
+        "surface": {
+          "DEFAULT": "#ffffff",
+          "description": "Pure White - Cards/Panels"
+        },
+        "text": {
+          "primary": "#1c1917",
+          "secondary": "#57534e",
+          "muted": "#a8a29e"
+        }
+      },
+      "gradients": {
+        "hero": "linear-gradient(135deg, #064e3b 0%, #10b981 100%)",
+        "gold": "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)"
+      }
+    },
+    "spacing": {
+      "scale": "Tailwind default but doubled for 'Clubhouse' feel",
+      "container_padding": "p-6 md:p-12",
+      "section_gap": "gap-8 md:gap-16"
+    },
+    "visual_enhancers": {
+      "radius": "rounded-xl",
+      "shadows": {
+        "card": "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
+        "floating": "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+      },
+      "borders": "border border-stone-200",
+      "textures": "Subtle noise overlay on the emerald backgrounds to mimic grass texture."
+    }
+  },
+  "components": {
+    "ScoreCard": {
+      "description": "The core input mechanism. Must be large and touch-friendly.",
+      "specs": "Grid layout. 3 'Skin' sections. Auto-calculating totals. Big +/- buttons.",
+      "path": "/app/frontend/src/components/tournament/ScoreCard.jsx"
+    },
+    "RinkMap": {
+      "description": "Visual representation of Green A and Green B.",
+      "specs": "2x6 Grid. Color-coded by status (Playing, Finished, Empty).",
+      "path": "/app/frontend/src/components/tournament/RinkMap.jsx"
+    },
+    "LeaderboardTable": {
+      "description": "The main view for standings.",
+      "specs": "Sortable. Highlight top 3. Show 'Skins' breakdown.",
+      "path": "/app/frontend/src/components/tournament/LeaderboardTable.jsx"
+    },
+    "DrawGenerator": {
+      "description": "Admin tool to create rounds.",
+      "specs": "Step-by-step wizard. Visual confirmation of 'No Repeats'.",
+      "path": "/app/frontend/src/components/admin/DrawGenerator.jsx"
+    }
+  },
+  "assets": {
+    "images": [
+      {
+        "category": "hero",
+        "url": "https://images.unsplash.com/photo-1565971604539-abd572d9b680?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzl8MHwxfHNlYXJjaHwxfHxsYXduJTIwYm93bHMlMjBtYXRjaCUyMGdyZWVuJTIwYWN0aW9ufGVufDB8fHx8MTc2NjE0MjM4MXww&ixlib=rb-4.1.0&q=85",
+        "description": "Close up of bowls on green - Use for Landing Page Hero / Login Background"
+      },
+      {
+        "category": "trophy",
+        "url": "https://images.unsplash.com/photo-1637635753233-b45f6539136d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzh8MHwxfHNlYXJjaHwxfHxsYXduJTIwYm93bHMlMjB0cm9waHklMjB3aW5uZXJ8ZW58MHx8fHwxNzY2MTQyMzgzfDA&ixlib=rb-4.1.0&q=85",
+        "description": "Trophy on grass - Use for Winner Modal / Leaderboard Header"
+      }
+    ],
+    "icons": "Lucide React (Trophy, Users, Calendar, ChevronRight, Plus, Minus, Medal)"
+  },
+  "layout_strategies": {
+    "dashboard": "Control Room Grid: Sidebar nav, dense data tables, quick action cards top right.",
+    "mobile_score": "Single Column Stack: Header (Match Info) -> Skin 1 Input -> Skin 2 Input -> Skin 3 Input -> Submit.",
+    "public_view": "Tetris Grid: Hero Leaderboard (Top 3) + Recent Matches Feed + Upcoming Draw."
+  },
+  "instructions_to_main_agent": [
+    "1. INSTALL FONTS: Add '@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');' to index.css",
+    "2. SETUP TAILWIND: Update tailwind.config.js with the 'Clubhouse' palette defined above.",
+    "3. COMPONENT LIBRARY: Use Shadcn for the 'shell' (Dialogs, Dropdowns, Tabs) but build custom 'Cards' for the specific Lawn Bowls needs (Scorecard, Rink).",
+    "4. ALGORITHM VISUALIZATION: When generating the draw, show a 'Loading/Calculating' state that explains 'Checking for repeat matchups...' to build trust.",
+    "5. MOBILE OPTIMIZATION: The 'Score Entry' page MUST be usable with one hand on a phone in bright sunlight (High Contrast).",
+    "6. DATA-TESTID: Ensure every input and button has a data-testid for testing."
+  ],
+  "universal_guidelines": [
+    "Do not use gradients for text.",
+    "Avoid 'Inter' for Headings - Use Playfair Display.",
+    "Use 'sonner' for all toast notifications.",
+    "Ensure all interactive elements have hover states (text-emerald-700 -> text-emerald-900)."
+  ]
+}
