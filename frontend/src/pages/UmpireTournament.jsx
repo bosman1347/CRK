@@ -22,6 +22,7 @@ const UmpireTournament = () => {
   const [tournament, setTournament] = useState(null);
   const [matches, setMatches] = useState([]);
   const [teams, setTeams] = useState([]);
+  const [currentRound, setCurrentRound] = useState(null);
   const [loading, setLoading] = useState(true);
   const [verifyingMatch, setVerifyingMatch] = useState(null);
   const [verifyScores, setVerifyScores] = useState({
