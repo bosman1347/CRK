@@ -510,11 +510,13 @@ async def umpire_generate_round(tournament_id: str, current_user: User = Depends
     import uuid
     next_round_num = current_round_num + 1
     round_id = str(uuid.uuid4())
+    round_access_token = secrets.token_urlsafe(32)
     round_doc = {
         "id": round_id,
         "tournament_id": tournament_id,
         "round_number": next_round_num,
-        "status": "active"
+        "status": "active",
+        "access_token": round_access_token
     }
     await db.rounds.insert_one(round_doc)
     
