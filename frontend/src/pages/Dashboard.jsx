@@ -55,6 +55,16 @@ const Dashboard = () => {
             <div>
               <h1 className="text-4xl md:text-5xl font-heading mb-2" data-testid="dashboard-title">Tournament Dashboard</h1>
               <p className="text-lg text-emerald-100">Welcome back, {user?.name}</p>
+              {user?.is_umpire && (
+                <Button
+                  onClick={() => navigate('/umpire')}
+                  variant="outline"
+                  className="mt-3 bg-white/10 text-white border-white/30 hover:bg-white/20"
+                  data-testid="umpire-dashboard-button"
+                >
+                  Go to Umpire Dashboard
+                </Button>
+              )}
             </div>
             <Button
               onClick={handleLogout}
