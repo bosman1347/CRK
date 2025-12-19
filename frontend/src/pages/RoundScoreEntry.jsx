@@ -209,32 +209,32 @@ const RoundScoreEntry = () => {
 
           {/* Score Entry Form */}
           {selectedMatch && !selectedMatch.verified && (
-            <Card className=\"floating-card border-stone-200\">
+            <Card className="floating-card border-stone-200">
               <CardHeader>
-                <CardTitle className=\"text-2xl font-heading\">Enter Scores</CardTitle>
+                <CardTitle className="text-2xl font-heading">Enter Scores</CardTitle>
                 <CardDescription>
                   Match: {selectedMatch.team1_name} vs {selectedMatch.team2_name} (Green {selectedMatch.green}, Rink {selectedMatch.rink})
                 </CardDescription>
               </CardHeader>
-              <CardContent className=\"space-y-6\">
+              <CardContent className="space-y-6">
                 {/* Team Selection */}
                 {!selectedTeam && (
-                  <div className=\"space-y-3\">
+                  <div className="space-y-3">
                     <Label>Select Your Team</Label>
-                    <div className=\"grid grid-cols-2 gap-3\">
+                    <div className="grid grid-cols-2 gap-3">
                       <Button
                         onClick={() => setSelectedTeam(selectedMatch.team1_name)}
-                        variant=\"outline\"
-                        className=\"h-auto py-4\"
-                        data-testid=\"select-team1\"
+                        variant="outline"
+                        className="h-auto py-4"
+                        data-testid="select-team1"
                       >
                         {selectedMatch.team1_name}
                       </Button>
                       <Button
                         onClick={() => setSelectedTeam(selectedMatch.team2_name)}
-                        variant=\"outline\"
-                        className=\"h-auto py-4\"
-                        data-testid=\"select-team2\"
+                        variant="outline"
+                        className="h-auto py-4"
+                        data-testid="select-team2"
                       >
                         {selectedMatch.team2_name}
                       </Button>
@@ -244,46 +244,46 @@ const RoundScoreEntry = () => {
 
                 {selectedTeam && (
                   <>
-                    <div className=\"flex justify-between items-center p-3 bg-primary/10 rounded-lg\">
-                      <span className=\"font-semibold\">Entering for: {selectedTeam}</span>
+                    <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
+                      <span className="font-semibold">Entering for: {selectedTeam}</span>
                       <Button
-                        variant=\"ghost\"
-                        size=\"sm\"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => { setSelectedTeam(''); setScores({ skin1: '', skin2: '', skin3: '' }); }}
-                        data-testid=\"change-team\"
+                        data-testid="change-team"
                       >
                         Change
                       </Button>
                     </div>
 
                     {/* Skin Score Entry */}
-                    <div className=\"space-y-4\">
+                    <div className="space-y-4">
                       {[1, 2, 3].map((skinNum) => {
                         const existingScore = getScoreForTeamAndSkin(selectedMatch, teamNumber, skinNum);
                         return (
-                          <div key={skinNum} className=\"space-y-3\" data-testid={`skin${skinNum}-section`}>
-                            <div className=\"flex items-center justify-between\">
-                              <h4 className=\"font-semibold\">Skin {skinNum}</h4>
+                          <div key={skinNum} className="space-y-3" data-testid={`skin${skinNum}-section`}>
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold">Skin {skinNum}</h4>
                               {existingScore !== null && (
-                                <Badge className=\"bg-green-100 text-green-700\">Saved: {existingScore}</Badge>
+                                <Badge className="bg-green-100 text-green-700">Saved: {existingScore}</Badge>
                               )}
                             </div>
-                            <div className=\"flex gap-3\">
+                            <div className="flex gap-3">
                               <Input
-                                type=\"number\"
-                                min=\"0\"
-                                placeholder=\"Enter shots scored\"
+                                type="number"
+                                min="0"
+                                placeholder="Enter shots scored"
                                 value={scores[`skin${skinNum}`]}
                                 onChange={(e) => setScores({ ...scores, [`skin${skinNum}`]: e.target.value })}
-                                className=\"flex-1\"
+                                className="flex-1"
                                 data-testid={`skin${skinNum}-input`}
                               />
                               <Button
                                 onClick={() => submitScore(skinNum)}
-                                className=\"bg-primary hover:bg-primary/90\"
+                                className="bg-primary hover:bg-primary/90"
                                 data-testid={`submit-skin${skinNum}`}
                               >
-                                <Save className=\"w-4 h-4 mr-2\" />
+                                <Save className="w-4 h-4 mr-2" />
                                 Save
                               </Button>
                             </div>
@@ -292,8 +292,8 @@ const RoundScoreEntry = () => {
                       })}
                     </div>
 
-                    <div className=\"p-4 bg-amber-50 rounded-lg border border-amber-200\">
-                      <p className=\"text-xs text-amber-800\">
+                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                      <p className="text-xs text-amber-800">
                         Enter the total shots your team scored in each 5-end skin. You can modify scores until the umpire verifies the match.
                       </p>
                     </div>
