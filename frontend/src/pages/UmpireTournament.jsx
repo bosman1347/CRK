@@ -113,7 +113,10 @@ const UmpireTournament = () => {
   };
 
   const printDraw = () => {
+    // Hide everything except scorecards
+    document.body.classList.add('printing-scorecards');
     window.print();
+    document.body.classList.remove('printing-scorecards');
   };
 
   const getRinkColor = (green) => {
