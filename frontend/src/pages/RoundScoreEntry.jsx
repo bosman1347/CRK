@@ -138,24 +138,24 @@ const RoundScoreEntry = () => {
   const teamNumber = selectedMatch && selectedTeam ? (selectedTeam === selectedMatch.team1_name ? 1 : 2) : null;
 
   return (
-    <div className=\"min-h-screen bg-background\">
-      <div className=\"gradient-hero text-white py-12\">
-        <div className=\"container mx-auto px-6\">
-          <h1 className=\"text-4xl md:text-5xl font-heading mb-2\" data-testid=\"round-title\">Round {roundData.round_number} Score Entry</h1>
-          <p className=\"text-lg text-emerald-100\">Select your match and enter scores</p>
+    <div className="min-h-screen bg-background">
+      <div className="gradient-hero text-white py-12">
+        <div className="container mx-auto px-6">
+          <h1 className="text-4xl md:text-5xl font-heading mb-2" data-testid="round-title">Round {roundData.round_number} Score Entry</h1>
+          <p className="text-lg text-emerald-100">Select your match and enter scores</p>
         </div>
       </div>
 
-      <div className=\"container mx-auto px-6 py-12\">
-        <div className=\"max-w-4xl mx-auto space-y-6\">
+      <div className="container mx-auto px-6 py-12">
+        <div className="max-w-4xl mx-auto space-y-6">
           {/* Match Selection */}
-          <Card className=\"floating-card border-stone-200\">
+          <Card className="floating-card border-stone-200">
             <CardHeader>
-              <CardTitle className=\"text-2xl font-heading\">Select Your Match</CardTitle>
+              <CardTitle className="text-2xl font-heading">Select Your Match</CardTitle>
               <CardDescription>Find your team and click to enter scores</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className=\"grid grid-cols-1 md:grid-cols-2 gap-4\">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {matches.map((match) => (
                   <div
                     key={match.id}
