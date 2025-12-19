@@ -171,15 +171,17 @@ const UmpireTournament = () => {
             </div>
             <div className="flex gap-3">
               {matches.length > 0 && (
-                <Button
-                  onClick={printDraw}
-                  variant="outline"
-                  className="bg-white/10 text-white border-white/30 hover:bg-white/20"
-                  data-testid="print-button"
-                >
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print Draw
-                </Button>
+                <>
+                  <Button
+                    onClick={printDraw}
+                    variant="outline"
+                    className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+                    data-testid="print-button"
+                  >
+                    <Printer className="w-4 h-4 mr-2" />
+                    Print/Download Scorecards
+                  </Button>
+                </>
               )}
               {tournament.current_round === 0 || canGenerateNextRound ? (
                 <Button
