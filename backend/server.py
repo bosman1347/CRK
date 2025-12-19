@@ -115,7 +115,6 @@ class Match(BaseModel):
     team2_name: str
     green: str
     rink: int
-    access_token: str
     skin1_team1_shots: Optional[int] = None
     skin1_team2_shots: Optional[int] = None
     skin2_team1_shots: Optional[int] = None
@@ -126,6 +125,8 @@ class Match(BaseModel):
     team2_skin_points: float = 0.0
     team1_match_points: float = 0.0
     team2_match_points: float = 0.0
+    team1_total_shots: int = 0
+    team2_total_shots: int = 0
     team1_scores_entered: bool = False
     team2_scores_entered: bool = False
     verified: bool = False
