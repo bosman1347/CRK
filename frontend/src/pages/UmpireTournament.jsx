@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, QrCode, CheckCircle, ChevronRight, Printer, Eye } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import axios from 'axios';
+import PrintableScorecard from '../components/PrintableScorecard';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
