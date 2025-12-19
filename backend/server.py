@@ -586,6 +586,10 @@ async def verify_match(match_id: str, verification: UmpireVerification, current_
         verification.skin3_team1_shots, verification.skin3_team2_shots
     )
     
+    # Calculate total shots
+    t1_total_shots = verification.skin1_team1_shots + verification.skin2_team1_shots + verification.skin3_team1_shots
+    t2_total_shots = verification.skin1_team2_shots + verification.skin2_team2_shots + verification.skin3_team2_shots
+    
     # Update match
     await db.matches.update_one(
         {"id": match_id},
@@ -600,6 +604,8 @@ async def verify_match(match_id: str, verification: UmpireVerification, current_
             "team2_skin_points": t2_sp,
             "team1_match_points": t1_mp,
             "team2_match_points": t2_mp,
+            "team1_total_shots": t1_total_shots,
+            "team2_total_shots": t2_total_shots,
             "verified": True,
             "verified_by": current_user.id,
             "verified_at": datetime.now(timezone.utc).isoformat(),
@@ -610,11 +616,25 @@ async def verify_match(match_id: str, verification: UmpireVerification, current_
     # Update team stats
     await db.teams.update_one(
         {"id": match["team1_id"]},
-        {"$inc": {"total_points": t1_mp, "matches_played": 1, "matches_won": 1 if t1_mp > t2_mp else 0}}
+        {"$inc": {
+            "total_points": t1_mp,
+            "matches_played": 1,
+            "matches_won": 1 if t1_mp > t2_mp else 0,
+            "shots_for": t1_total_shots,
+            "shots_against": t2_total_shots,
+            "shot_difference": t1_total_shots - t2_total_shots
+        }}
     )
     await db.teams.update_one(
         {"id": match["team2_id"]},
-        {"$inc": {"total_points": t2_mp, "matches_played": 1, "matches_won": 1 if t2_mp > t1_mp else 0}}
+        {"$inc": {
+            "total_points": t2_mp,
+            "matches_played": 1,
+            "matches_won": 1 if t2_mp > t1_mp else 0,
+            "shots_for": t2_total_shots,
+            "shots_against": t1_total_shots,
+            "shot_difference": t2_total_shots - t1_total_shots
+        }}
     )
     
     # Add to match history
