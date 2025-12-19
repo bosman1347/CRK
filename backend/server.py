@@ -652,19 +652,30 @@ async def verify_match(match_id: str, verification: UmpireVerification, current_
     
     return {"message": "Match verified successfully"}
 
-# Public token-based score entry
-@api_router.get("/matches/by-token/{token}")
-async def get_match_by_token(token: str):
-    match = await db.matches.find_one({"access_token": token}, {"_id": 0})
-    if not match:
-        raise HTTPException(status_code=404, detail="Match not found")
-    # Don't return access_token in response
-    match_data = Match(**match)
-    return match_data
+# Public token-based score entry (by round)
+@api_router.get("/rounds/by-token/{token}")
+async def get_round_by_token(token: str):
+    round_data = await db.rounds.find_one({"access_token": token}, {"_id": 0})
+    if not round_data:
+        raise HTTPException(status_code=404, detail="Round not found")
+    
+    # Get all matches for this round
+    matches = await db.matches.find({"round_id": round_data["id"]}, {"_id": 0}).to_list(None)
+    
+    return {
+        "round": Round(**round_data),
+        "matches": [Match(**m) for m in matches]
+    }
 
-@api_router.post("/matches/by-token/{token}/scores")
-async def submit_team_scores(token: str, score_entry: TeamScoreEntry):
-    match = await db.matches.find_one({"access_token": token}, {"_id": 0})
+@api_router.post("/rounds/by-token/{token}/matches/{match_id}/scores")
+async def submit_match_scores(token: str, match_id: str, score_entry: TeamScoreEntry):
+    # Verify round token
+    round_data = await db.rounds.find_one({"access_token": token}, {"_id": 0})
+    if not round_data:
+        raise HTTPException(status_code=404, detail="Round not found")
+    
+    # Get match
+    match = await db.matches.find_one({"id": match_id, "round_id": round_data["id"]}, {"_id": 0})
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
     
@@ -688,7 +699,7 @@ async def submit_team_scores(token: str, score_entry: TeamScoreEntry):
     entered_field = f"team{team_num}_scores_entered"
     
     await db.matches.update_one(
-        {"access_token": token},
+        {"id": match_id},
         {"$set": {field_name: score_entry.shots, entered_field: True}}
     )
     
