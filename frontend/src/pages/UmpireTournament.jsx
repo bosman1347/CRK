@@ -397,33 +397,52 @@ const UmpireTournament = () => {
                 )}
               </div>
 
-              {['skin1', 'skin2', 'skin3'].map((skin, idx) => (
-                <div key={skin} className="space-y-3">
-                  <h5 className="font-semibold">Skin {idx + 1}</h5>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>{verifyingMatch.team1_name}</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={verifyScores[`${skin}_team1_shots`]}
-                        onChange={(e) => setVerifyScores({ ...verifyScores, [`${skin}_team1_shots`]: e.target.value })}
-                        data-testid={`${skin}-team1-input`}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{verifyingMatch.team2_name}</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={verifyScores[`${skin}_team2_shots`]}
-                        onChange={(e) => setVerifyScores({ ...verifyScores, [`${skin}_team2_shots`]: e.target.value })}
-                        data-testid={`${skin}-team2-input`}
-                      />
+              {['skin1', 'skin2', 'skin3'].map((skin, idx) => {
+                const team1Original = verifyingMatch[`${skin}_team1_shots`];
+                const team2Original = verifyingMatch[`${skin}_team2_shots`];
+                const team1Current = verifyScores[`${skin}_team1_shots`];
+                const team2Current = verifyScores[`${skin}_team2_shots`];
+                
+                return (
+                  <div key={skin} className="space-y-3">
+                    <h5 className="font-semibold">Skin {idx + 1} (Ends {idx * 5 + 1}-{idx * 5 + 5})</h5>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>{verifyingMatch.team1_name}</Label>
+                        {team1Original !== null && (
+                          <div className="text-xs text-muted-foreground mb-1">
+                            <Badge className="bg-blue-100 text-blue-700">Player entered: {team1Original}</Badge>
+                          </div>
+                        )}
+                        <Input
+                          type="number"
+                          min="0"
+                          value={team1Current}
+                          onChange={(e) => setVerifyScores({ ...verifyScores, [`${skin}_team1_shots`]: e.target.value })}
+                          data-testid={`${skin}-team1-input`}
+                          className={team1Original !== null && parseInt(team1Current) !== team1Original ? 'border-amber-500 bg-amber-50' : ''}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{verifyingMatch.team2_name}</Label>
+                        {team2Original !== null && (
+                          <div className="text-xs text-muted-foreground mb-1">
+                            <Badge className="bg-blue-100 text-blue-700">Player entered: {team2Original}</Badge>
+                          </div>
+                        )}
+                        <Input
+                          type="number"
+                          min="0"
+                          value={team2Current}
+                          onChange={(e) => setVerifyScores({ ...verifyScores, [`${skin}_team2_shots`]: e.target.value })}
+                          data-testid={`${skin}-team2-input`}
+                          className={team2Original !== null && parseInt(team2Current) !== team2Original ? 'border-amber-500 bg-amber-50' : ''}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setVerifyingMatch(null)} className="flex-1">
