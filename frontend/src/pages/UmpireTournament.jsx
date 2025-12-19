@@ -378,6 +378,18 @@ const UmpireTournament = () => {
         )}
       </div>
 
+      {/* Printable Scorecards (hidden on screen) */}
+      {currentRoundData && matches.length > 0 && (
+        <div className="hidden print:block">
+          <PrintableScorecard
+            round={currentRoundData}
+            matches={matches}
+            qrUrl={`${FRONTEND_URL}/round/${currentRoundData.access_token}`}
+            tournamentName={tournament.name}
+          />
+        </div>
+      )}
+
       {/* Verify Match Dialog */}
       {verifyingMatch && (
         <Dialog open={!!verifyingMatch} onOpenChange={() => setVerifyingMatch(null)}>
