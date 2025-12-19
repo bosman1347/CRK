@@ -393,14 +393,14 @@ const UmpireTournament = () => {
       {/* Verify Match Dialog */}
       {verifyingMatch && (
         <Dialog open={!!verifyingMatch} onOpenChange={() => setVerifyingMatch(null)}>
-          <DialogContent className="sm:max-w-2xl">
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>Verify Match Scores</DialogTitle>
               <DialogDescription>
                 Review and confirm scores from paper scorecard
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-6 py-4">
+            <div className="space-y-6 py-4 overflow-y-auto flex-1">
               <div>
                 <h4 className="font-semibold mb-2">{verifyingMatch.team1_name} vs {verifyingMatch.team2_name}</h4>
                 <p className="text-sm text-muted-foreground">Green {verifyingMatch.green} - Rink {verifyingMatch.rink}</p>
