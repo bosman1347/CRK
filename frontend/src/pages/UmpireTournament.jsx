@@ -54,6 +54,7 @@ const UmpireTournament = () => {
         const roundsRes = await axios.get(`${API}/tournaments/${id}/rounds`, { headers: getAuthHeader() });
         const currentRoundData = roundsRes.data[roundsRes.data.length - 1];
         setCurrentRound(currentRoundData);
+        setCurrentRoundData(currentRoundData);
         const matchesRes = await axios.get(`${API}/umpire/rounds/${currentRoundData.id}/matches`, { headers: getAuthHeader() });
         setMatches(matchesRes.data);
       }
