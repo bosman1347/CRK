@@ -50,25 +50,7 @@ const TournamentDetail = () => {
     }
   };
 
-  const startTournament = async () => {
-    try {
-      await axios.post(`${API}/tournaments/${id}/start`, {}, { headers: getAuthHeader() });
-      toast.success('Tournament started! Round 1 has been generated.');
-      fetchData();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to start tournament');
-    }
-  };
-
-  const generateNextRound = async () => {
-    try {
-      await axios.post(`${API}/tournaments/${id}/rounds/next`, {}, { headers: getAuthHeader() });
-      toast.success('Next round generated!');
-      fetchData();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to generate next round');
-    }
-  };
+  // Tournament management is now handled by umpire
 
   const getMatchStatusBadge = (match) => {
     if (match.status === 'completed') {
