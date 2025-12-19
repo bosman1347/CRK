@@ -708,8 +708,14 @@ async def submit_match_scores(token: str, match_id: str, score_entry: TeamScoreE
 # Public routes
 @api_router.get("/public/tournaments/{tournament_id}/standings")
 async def get_public_standings(tournament_id: str):
-    teams = await db.teams.find({"tournament_id": tournament_id}, {"_id": 0}).sort("total_points", -1).to_list(None)
-    return [Team(**t) for t in teams]
+    teams = await db.teams.find({"tournament_id": tournament_id}, {"_id": 0}).to_list(None)
+    # Sort by: 1) total_points (desc), 2) shot_difference (desc), 3) shots_for (desc)
+    teams_sorted = sorted(teams, key=lambda t: (
+        -t.get("total_points", 0),
+        -t.get("shot_difference", 0),
+        -t.get("shots_for", 0)
+    ))
+    return [Team(**t) for t in teams_sorted]
 
 @api_router.get("/public/tournaments/{tournament_id}/summary")
 async def get_public_summary(tournament_id: str):
