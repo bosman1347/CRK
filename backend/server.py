@@ -89,6 +89,7 @@ class Round(BaseModel):
     tournament_id: str
     round_number: int
     status: str
+    access_token: Optional[str] = None
 
 class TeamScoreEntry(BaseModel):
     team_number: int  # 1 or 2
