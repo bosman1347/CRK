@@ -122,10 +122,12 @@ const UmpireTournament = () => {
       return;
     }
     
+    toast.info('Opening print dialog... Select "Save as PDF" to download, or print directly to printer.', { duration: 5000 });
+    
     // Trigger print
     setTimeout(() => {
       window.print();
-    }, 100);
+    }, 500);
   };
 
   const getRinkColor = (green) => {
