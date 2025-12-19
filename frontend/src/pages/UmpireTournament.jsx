@@ -186,7 +186,7 @@ const UmpireTournament = () => {
           <Card className="floating-card border-stone-200">
             <CardContent className="py-12 text-center">
               <h3 className="text-xl font-heading mb-2">Tournament Not Started</h3>
-              <p className="text-muted-foreground mb-6">Click "Generate Round 1" to start the tournament</p>
+              <p className="text-muted-foreground mb-6">Click &quot;Generate Round 1&quot; to start the tournament</p>
             </CardContent>
           </Card>
         ) : (
