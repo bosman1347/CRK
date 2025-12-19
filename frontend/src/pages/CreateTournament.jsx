@@ -57,11 +57,16 @@ const CreateTournament = () => {
       return;
     }
 
+    if (!umpireEmail.trim()) {
+      toast.error('Umpire email is required');
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await axios.post(
         `${API}/tournaments`,
-        { name: tournamentName, teams: validTeams },
+        { name: tournamentName, teams: validTeams, umpire_email: umpireEmail },
         { headers: getAuthHeader() }
       );
       
