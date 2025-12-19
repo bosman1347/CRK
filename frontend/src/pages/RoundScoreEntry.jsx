@@ -104,27 +104,27 @@ const RoundScoreEntry = () => {
 
   if (allVerified) {
     return (
-      <div className=\"min-h-screen flex items-center justify-center bg-background p-4\">
-        <Card className=\"max-w-2xl w-full border-green-200\">
-          <CardHeader className=\"text-center\">
-            <div className=\"flex justify-center mb-4\">
-              <div className=\"w-16 h-16 rounded-full bg-green-100 flex items-center justify-center\">
-                <CheckCircle className=\"w-8 h-8 text-green-600\" />
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="max-w-2xl w-full border-green-200">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
             </div>
-            <CardTitle className=\"text-2xl font-heading\">Round {roundData.round_number} Complete</CardTitle>
+            <CardTitle className="text-2xl font-heading">Round {roundData.round_number} Complete</CardTitle>
             <CardDescription>All matches have been verified by the umpire</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className=\"space-y-3\">
+            <div className="space-y-3">
               {matches.map((match) => (
-                <div key={match.id} className=\"flex justify-between items-center p-3 bg-stone-50 rounded-lg\">
-                  <div className=\"text-sm\">
-                    <p className=\"font-semibold\">{match.team1_name} vs {match.team2_name}</p>
-                    <p className=\"text-xs text-muted-foreground\">Green {match.green} - Rink {match.rink}</p>
+                <div key={match.id} className="flex justify-between items-center p-3 bg-stone-50 rounded-lg">
+                  <div className="text-sm">
+                    <p className="font-semibold">{match.team1_name} vs {match.team2_name}</p>
+                    <p className="text-xs text-muted-foreground">Green {match.green} - Rink {match.rink}</p>
                   </div>
-                  <div className=\"text-right text-sm\">
-                    <p className=\"font-mono font-bold\">{match.team1_match_points.toFixed(1)} - {match.team2_match_points.toFixed(1)}</p>
+                  <div className="text-right text-sm">
+                    <p className="font-mono font-bold">{match.team1_match_points.toFixed(1)} - {match.team2_match_points.toFixed(1)}</p>
                   </div>
                 </div>
               ))}
