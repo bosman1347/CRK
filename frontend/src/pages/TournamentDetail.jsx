@@ -203,8 +203,7 @@ const TournamentDetail = () => {
                   {currentMatches.map((match) => (
                     <Card
                       key={match.id}
-                      className="floating-card border-stone-200 cursor-pointer"
-                      onClick={() => navigate(`/matches/${match.id}/score`)}
+                      className="floating-card border-stone-200"
                       data-testid={`match-card-${match.id}`}
                     >
                       <CardHeader>
