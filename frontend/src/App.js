@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import CreateTournament from './pages/CreateTournament';
 import TournamentDetail from './pages/TournamentDetail';
 import MatchScore from './pages/MatchScore';
+import RoundScoreEntry from './pages/RoundScoreEntry';
 import UmpireDashboard from './pages/UmpireDashboard';
 import UmpireTournament from './pages/UmpireTournament';
 import PublicStandings from './pages/PublicStandings';
