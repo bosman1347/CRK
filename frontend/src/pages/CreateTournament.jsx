@@ -14,6 +14,7 @@ const API = `${BACKEND_URL}/api`;
 
 const CreateTournament = () => {
   const [tournamentName, setTournamentName] = useState('');
+  const [umpireEmail, setUmpireEmail] = useState('');
   const [teams, setTeams] = useState(['', '']);
   const [loading, setLoading] = useState(false);
   const { getAuthHeader } = useAuth();
