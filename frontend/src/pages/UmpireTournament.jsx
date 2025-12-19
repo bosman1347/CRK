@@ -198,9 +198,44 @@ const UmpireTournament = () => {
               <div className="space-y-6">
                 <div className="flex items-center justify-between print:hidden">
                   <h3 className="text-2xl font-heading">Round {tournament.current_round} Matches</h3>
-                  <Badge className={allMatchesVerified ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}>
-                    {matches.filter(m => m.verified).length} / {matches.length} Verified
-                  </Badge>
+                  <div className="flex gap-3 items-center">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" data-testid="round-qr-button">
+                          <QrCode className="w-4 h-4 mr-2" />
+                          Show Round QR Code
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Round {tournament.current_round} QR Code</DialogTitle>
+                          <DialogDescription>
+                            All teams scan this code to enter their match scores
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center space-y-4 py-4">
+                          {matches.length > 0 && matches[0].round_id && (
+                            <>
+                              <QRCodeSVG 
+                                value={`${FRONTEND_URL}/round/${(async () => {
+                                  const r = await db.rounds.find_one({ id: matches[0].round_id });
+                                  return r?.access_token || '';
+                                })()}`} 
+                                size={256} 
+                              />
+                              <div className="text-center">
+                                <p className="text-sm font-medium">Round {tournament.current_round}</p>
+                                <p className="text-xs text-muted-foreground">{matches.length} matches</p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    <Badge className={allMatchesVerified ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}>
+                      {matches.filter(m => m.verified).length} / {matches.length} Verified
+                    </Badge>
+                  </div>
                 </div>
 
                 <div className="hidden print:block mb-8">
