@@ -169,35 +169,35 @@ const RoundScoreEntry = () => {
                     }`}
                     data-testid={`match-${match.id}`}
                   >
-                    <div className=\"flex gap-2 mb-3\">
+                    <div className="flex gap-2 mb-3">
                       <Badge className={`rink-badge text-xs ${getRinkColor(match.green)}`}>
                         Green {match.green}
                       </Badge>
-                      <Badge className=\"rink-badge text-xs bg-stone-100 text-stone-700\">
+                      <Badge className="rink-badge text-xs bg-stone-100 text-stone-700">
                         Rink {match.rink}
                       </Badge>
                       {match.verified && (
-                        <Badge className=\"text-xs bg-green-100 text-green-700\">Verified</Badge>
+                        <Badge className="text-xs bg-green-100 text-green-700">Verified</Badge>
                       )}
                     </div>
-                    <div className=\"space-y-2\">
-                      <div className=\"flex justify-between items-center\">
-                        <span className=\"font-medium text-sm\">{match.team1_name}</span>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-sm">{match.team1_name}</span>
                         {match.team1_scores_entered && !match.verified && (
-                          <Badge className=\"text-xs bg-blue-100 text-blue-700\">✓</Badge>
+                          <Badge className="text-xs bg-blue-100 text-blue-700">✓</Badge>
                         )}
                         {match.verified && (
-                          <span className=\"font-mono text-sm font-bold\">{match.team1_match_points.toFixed(1)}</span>
+                          <span className="font-mono text-sm font-bold">{match.team1_match_points.toFixed(1)}</span>
                         )}
                       </div>
-                      <div className=\"text-center text-xs text-muted-foreground\">vs</div>
-                      <div className=\"flex justify-between items-center\">
-                        <span className=\"font-medium text-sm\">{match.team2_name}</span>
+                      <div className="text-center text-xs text-muted-foreground">vs</div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-sm">{match.team2_name}</span>
                         {match.team2_scores_entered && !match.verified && (
-                          <Badge className=\"text-xs bg-blue-100 text-blue-700\">✓</Badge>
+                          <Badge className="text-xs bg-blue-100 text-blue-700">✓</Badge>
                         )}
                         {match.verified && (
-                          <span className=\"font-mono text-sm font-bold\">{match.team2_match_points.toFixed(1)}</span>
+                          <span className="font-mono text-sm font-bold">{match.team2_match_points.toFixed(1)}</span>
                         )}
                       </div>
                     </div>
