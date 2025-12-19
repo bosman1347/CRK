@@ -442,7 +442,10 @@ async def create_tournament(tournament_data: TournamentCreate, current_user: Use
             "name": team_name,
             "total_points": 0.0,
             "matches_played": 0,
-            "matches_won": 0
+            "matches_won": 0,
+            "shots_for": 0,
+            "shots_against": 0,
+            "shot_difference": 0
         }
         await db.teams.insert_one(team_doc)
     
