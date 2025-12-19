@@ -92,62 +92,64 @@ const PrintableScorecard = ({ round, matches, qrUrl, tournamentName }) => {
 
               {/* Score Table */}
               <div style={{ marginBottom: '10px' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #000' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#e0e0e0' }}>
-                  <th style={{ border: '1px solid #000', padding: '8px', fontWeight: 'bold' }}>Skin</th>
-                  <th style={{ border: '1px solid #000', padding: '8px', fontWeight: 'bold' }}>Ends</th>
-                  <th style={{ border: '1px solid #000', padding: '8px', fontWeight: 'bold' }}>{match.team1_name}</th>
-                  <th style={{ border: '1px solid #000', padding: '8px', fontWeight: 'bold' }}>{match.team2_name}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style={{ border: '1px solid #000', padding: '12px', textAlign: 'center', fontWeight: 'bold' }}>1</td>
-                  <td style={{ border: '1px solid #000', padding: '12px', textAlign: 'center' }}>1-5</td>
-                  <td style={{ border: '1px solid #000', padding: '12px', backgroundColor: '#fff' }}></td>
-                  <td style={{ border: '1px solid #000', padding: '12px', backgroundColor: '#fff' }}></td>
-                </tr>
-                <tr>
-                  <td style={{ border: '1px solid #000', padding: '12px', textAlign: 'center', fontWeight: 'bold' }}>2</td>
-                  <td style={{ border: '1px solid #000', padding: '12px', textAlign: 'center' }}>6-10</td>
-                  <td style={{ border: '1px solid #000', padding: '12px', backgroundColor: '#fff' }}></td>
-                  <td style={{ border: '1px solid #000', padding: '12px', backgroundColor: '#fff' }}></td>
-                </tr>
-                <tr>
-                  <td style={{ border: '1px solid #000', padding: '12px', textAlign: 'center', fontWeight: 'bold' }}>3</td>
-                  <td style={{ border: '1px solid #000', padding: '12px', textAlign: 'center' }}>11-15</td>
-                  <td style={{ border: '1px solid #000', padding: '12px', backgroundColor: '#fff' }}></td>
-                  <td style={{ border: '1px solid #000', padding: '12px', backgroundColor: '#fff' }}></td>
-                </tr>
-                <tr style={{ backgroundColor: '#e0e0e0' }}>
-                  <td colSpan="2" style={{ border: '1px solid #000', padding: '12px', textAlign: 'center', fontWeight: 'bold' }}>
-                    TOTAL SHOTS
-                  </td>
-                  <td style={{ border: '1px solid #000', padding: '12px', backgroundColor: '#fff' }}></td>
-                  <td style={{ border: '1px solid #000', padding: '12px', backgroundColor: '#fff' }}></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #000', fontSize: '11px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#e0e0e0' }}>
+                      <th style={{ border: '1px solid #000', padding: '5px', fontWeight: 'bold' }}>Skin</th>
+                      <th style={{ border: '1px solid #000', padding: '5px', fontWeight: 'bold' }}>Ends</th>
+                      <th style={{ border: '1px solid #000', padding: '5px', fontWeight: 'bold', fontSize: '10px' }}>Team 1</th>
+                      <th style={{ border: '1px solid #000', padding: '5px', fontWeight: 'bold', fontSize: '10px' }}>Team 2</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style={{ border: '1px solid #000', padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>1</td>
+                      <td style={{ border: '1px solid #000', padding: '10px', textAlign: 'center' }}>1-5</td>
+                      <td style={{ border: '1px solid #000', padding: '10px', backgroundColor: '#fff' }}></td>
+                      <td style={{ border: '1px solid #000', padding: '10px', backgroundColor: '#fff' }}></td>
+                    </tr>
+                    <tr>
+                      <td style={{ border: '1px solid #000', padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>2</td>
+                      <td style={{ border: '1px solid #000', padding: '10px', textAlign: 'center' }}>6-10</td>
+                      <td style={{ border: '1px solid #000', padding: '10px', backgroundColor: '#fff' }}></td>
+                      <td style={{ border: '1px solid #000', padding: '10px', backgroundColor: '#fff' }}></td>
+                    </tr>
+                    <tr>
+                      <td style={{ border: '1px solid #000', padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>3</td>
+                      <td style={{ border: '1px solid #000', padding: '10px', textAlign: 'center' }}>11-15</td>
+                      <td style={{ border: '1px solid #000', padding: '10px', backgroundColor: '#fff' }}></td>
+                      <td style={{ border: '1px solid #000', padding: '10px', backgroundColor: '#fff' }}></td>
+                    </tr>
+                    <tr style={{ backgroundColor: '#e0e0e0' }}>
+                      <td colSpan="2" style={{ border: '1px solid #000', padding: '8px', textAlign: 'center', fontWeight: 'bold', fontSize: '10px' }}>
+                        TOTAL
+                      </td>
+                      <td style={{ border: '1px solid #000', padding: '8px', backgroundColor: '#fff' }}></td>
+                      <td style={{ border: '1px solid #000', padding: '8px', backgroundColor: '#fff' }}></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
-          {/* QR Code Section */}
-          <div style={{ textAlign: 'center', marginTop: 'auto', border: '2px dashed #000', padding: '15px' }}>
-            <p style={{ fontSize: '14px', fontWeight: 'bold', margin: '0 0 10px 0' }}>
-              Scan to Enter Scores
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-              <QRCodeSVG value={qrUrl} size={120} />
+              {/* QR Code Section */}
+              <div style={{ textAlign: 'center', marginTop: 'auto', border: '2px dashed #000', padding: '10px' }}>
+                <p style={{ fontSize: '11px', fontWeight: 'bold', margin: '0 0 8px 0' }}>
+                  Scan to Enter Scores
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '6px' }}>
+                  <QRCodeSVG value={qrUrl} size={100} />
+                </div>
+                <p style={{ fontSize: '9px', margin: 0, color: '#666' }}>
+                  Both teams scan this code
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div style={{ marginTop: '8px', fontSize: '9px', textAlign: 'center', color: '#666' }}>
+                <p style={{ margin: 0 }}>Umpire: _____________ Date: _______</p>
+              </div>
             </div>
-            <p style={{ fontSize: '11px', margin: 0, color: '#666' }}>
-              Both teams use this QR code to enter scores after each skin
-            </p>
-          </div>
-
-          {/* Footer */}
-          <div style={{ marginTop: '10px', fontSize: '10px', textAlign: 'center', color: '#666' }}>
-            <p style={{ margin: 0 }}>Umpire Signature: ___________________ Date: ___________</p>
-          </div>
+          ))}
         </div>
       ))}
     </div>
