@@ -1,12 +1,18 @@
 import { QRCodeSVG } from 'qrcode.react';
 
 const PrintableScorecard = ({ round, matches, qrUrl, tournamentName }) => {
+  // Group matches into pairs for 2-per-page layout
+  const matchPairs = [];
+  for (let i = 0; i < matches.length; i += 2) {
+    matchPairs.push(matches.slice(i, i + 2));
+  }
+
   return (
     <div className="print-scorecards">
       <style>{`
         @media print {
           @page {
-            size: A5 portrait;
+            size: A4 landscape;
             margin: 10mm;
           }
           
@@ -26,16 +32,28 @@ const PrintableScorecard = ({ round, matches, qrUrl, tournamentName }) => {
             width: 100%;
           }
           
-          .scorecard-page {
+          .scorecard-pair {
             page-break-after: always;
             width: 100%;
-            height: 100%;
+            display: flex;
+            gap: 10mm;
+            justify-content: space-between;
+          }
+          
+          .scorecard-pair:last-child {
+            page-break-after: avoid;
+          }
+          
+          .scorecard-single {
+            width: calc(50% - 5mm);
             display: flex;
             flex-direction: column;
           }
-          
-          .scorecard-page:last-child {
-            page-break-after: avoid;
+        }
+        
+        @media screen {
+          .print-scorecards {
+            display: none;
           }
         }
       `}</style>
