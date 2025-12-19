@@ -7,6 +7,10 @@ import Dashboard from './pages/Dashboard';
 import CreateTournament from './pages/CreateTournament';
 import TournamentDetail from './pages/TournamentDetail';
 import MatchScore from './pages/MatchScore';
+import UmpireDashboard from './pages/UmpireDashboard';
+import UmpireTournament from './pages/UmpireTournament';
+import PublicStandings from './pages/PublicStandings';
+import PublicSummary from './pages/PublicSummary';
 import '@/App.css';
 
 const PrivateRoute = ({ children }) => {
@@ -19,6 +23,19 @@ const PrivateRoute = ({ children }) => {
   return user ? children : <Navigate to="/login" />;
 };
 
+const UmpireRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+  
+  if (!user) return <Navigate to="/login" />;
+  if (!user.is_umpire) return <Navigate to="/" />;
+  
+  return children;
+};
+
 function AppRoutes() {
   return (
     <Routes>
@@ -27,7 +44,11 @@ function AppRoutes() {
       <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/tournaments/create" element={<PrivateRoute><CreateTournament /></PrivateRoute>} />
       <Route path="/tournaments/:id" element={<PrivateRoute><TournamentDetail /></PrivateRoute>} />
-      <Route path="/matches/:id/score" element={<PrivateRoute><MatchScore /></PrivateRoute>} />
+      <Route path="/match/:token" element={<MatchScore />} />
+      <Route path="/umpire" element={<UmpireRoute><UmpireDashboard /></UmpireRoute>} />
+      <Route path="/umpire/tournaments/:id" element={<UmpireRoute><UmpireTournament /></UmpireRoute>} />
+      <Route path="/standings/:id" element={<PublicStandings />} />
+      <Route path="/summary/:id" element={<PublicSummary />} />
     </Routes>
   );
 }
