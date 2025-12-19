@@ -81,7 +81,7 @@ const RoundScoreEntry = () => {
 
   if (loading) {
     return (
-      <div className=\"min-h-screen flex items-center justify-center bg-background\">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <p>Loading round...</p>
       </div>
     );
@@ -89,11 +89,11 @@ const RoundScoreEntry = () => {
 
   if (!roundData) {
     return (
-      <div className=\"min-h-screen flex items-center justify-center bg-background\">
-        <Card className=\"max-w-md\">
-          <CardContent className=\"py-12 text-center\">
-            <h3 className=\"text-xl font-heading mb-2\">Round Not Found</h3>
-            <p className=\"text-muted-foreground\">Invalid or expired QR code</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardContent className="py-12 text-center">
+            <h3 className="text-xl font-heading mb-2">Round Not Found</h3>
+            <p className="text-muted-foreground">Invalid or expired QR code</p>
           </CardContent>
         </Card>
       </div>
