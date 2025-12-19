@@ -72,26 +72,26 @@ const PrintableScorecard = ({ round, matches, qrUrl, tournamentName }) => {
                 </p>
               </div>
 
-          {/* Match Details */}
-          <div style={{ marginBottom: '15px', fontSize: '14px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span><strong>Green:</strong> {match.green}</span>
-              <span><strong>Rink:</strong> {match.rink}</span>
-            </div>
-          </div>
+              {/* Match Details */}
+              <div style={{ marginBottom: '10px', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                  <span><strong>Green:</strong> {match.green}</span>
+                  <span><strong>Rink:</strong> {match.rink}</span>
+                </div>
+              </div>
 
-          {/* Teams */}
-          <div style={{ marginBottom: '15px' }}>
-            <div style={{ border: '2px solid #000', padding: '10px', marginBottom: '10px', backgroundColor: '#f0f0f0' }}>
-              <p style={{ fontSize: '16px', fontWeight: 'bold', margin: 0 }}>Team 1: {match.team1_name}</p>
-            </div>
-            <div style={{ border: '2px solid #000', padding: '10px', backgroundColor: '#f0f0f0' }}>
-              <p style={{ fontSize: '16px', fontWeight: 'bold', margin: 0 }}>Team 2: {match.team2_name}</p>
-            </div>
-          </div>
+              {/* Teams */}
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ border: '2px solid #000', padding: '6px', marginBottom: '5px', backgroundColor: '#f0f0f0' }}>
+                  <p style={{ fontSize: '12px', fontWeight: 'bold', margin: 0 }}>Team 1: {match.team1_name}</p>
+                </div>
+                <div style={{ border: '2px solid #000', padding: '6px', backgroundColor: '#f0f0f0' }}>
+                  <p style={{ fontSize: '12px', fontWeight: 'bold', margin: 0 }}>Team 2: {match.team2_name}</p>
+                </div>
+              </div>
 
-          {/* Score Table */}
-          <div style={{ marginBottom: '15px' }}>
+              {/* Score Table */}
+              <div style={{ marginBottom: '10px' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #000' }}>
               <thead>
                 <tr style={{ backgroundColor: '#e0e0e0' }}>
