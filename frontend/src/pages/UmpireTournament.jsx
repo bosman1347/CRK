@@ -34,6 +34,7 @@ const UmpireTournament = () => {
     skin3_team1_shots: '',
     skin3_team2_shots: ''
   });
+  const [currentRoundData, setCurrentRoundData] = useState(null);
   const { getAuthHeader } = useAuth();
   const navigate = useNavigate();
 
