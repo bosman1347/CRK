@@ -65,8 +65,8 @@ class Tournament(BaseModel):
     id: str
     name: str
     creator_id: str
-    umpire_id: str
-    umpire_name: str
+    umpire_id: Optional[str] = None
+    umpire_name: Optional[str] = None
     status: str
     current_round: int
     created_at: str
