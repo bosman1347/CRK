@@ -388,7 +388,7 @@ const UmpireTournament = () => {
       </div>
 
       {/* Printable Scorecards (hidden on screen) */}
-      {currentRoundData && matches.length > 0 && (
+      {currentRoundData && currentRoundData.access_token && matches.length > 0 && (
         <div className="hidden print:block">
           <PrintableScorecard
             round={currentRoundData}
