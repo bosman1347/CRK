@@ -357,6 +357,25 @@ async def login(user_data: UserLogin):
     
     return Token(access_token=access_token, token_type="bearer", user=user_obj)
 
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
+@api_router.post("/auth/change-password")
+async def change_password(password_data: ChangePassword, current_user: User = Depends(get_current_user)):
+    user = await db.users.find_one({"id": current_user.id}, {"_id": 0})
+    
+    if not verify_password(password_data.current_password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+    
+    new_hash = get_password_hash(password_data.new_password)
+    await db.users.update_one(
+        {"id": current_user.id},
+        {"$set": {"password_hash": new_hash}}
+    )
+    
+    return {"message": "Password changed successfully"}
+
 # Tournament routes
 @api_router.post("/tournaments")
 async def create_tournament(tournament_data: TournamentCreate, current_user: User = Depends(get_current_user)):
