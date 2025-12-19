@@ -50,8 +50,9 @@ const UmpireTournament = () => {
 
       if (tournamentRes.data.current_round > 0) {
         const roundsRes = await axios.get(`${API}/tournaments/${id}/rounds`, { headers: getAuthHeader() });
-        const currentRound = roundsRes.data[roundsRes.data.length - 1];
-        const matchesRes = await axios.get(`${API}/umpire/rounds/${currentRound.id}/matches`, { headers: getAuthHeader() });
+        const currentRoundData = roundsRes.data[roundsRes.data.length - 1];
+        setCurrentRound(currentRoundData);
+        const matchesRes = await axios.get(`${API}/umpire/rounds/${currentRoundData.id}/matches`, { headers: getAuthHeader() });
         setMatches(matchesRes.data);
       }
     } catch (error) {
