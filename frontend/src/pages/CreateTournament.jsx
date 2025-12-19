@@ -121,6 +121,23 @@ const CreateTournament = () => {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="umpire-email">Umpire Email</Label>
+                <Input
+                  id="umpire-email"
+                  type="email"
+                  placeholder="umpire@example.com"
+                  value={umpireEmail}
+                  onChange={(e) => setUmpireEmail(e.target.value)}
+                  required
+                  data-testid="umpire-email-input"
+                  className="border-stone-300"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter the email of a registered umpire who will manage this tournament
+                </p>
+              </div>
+
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <Label>Teams ({teams.filter(t => t.trim()).length}/24)</Label>
