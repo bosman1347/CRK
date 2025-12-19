@@ -182,7 +182,10 @@ const TournamentDetail = () => {
                 <CardContent className="py-12 text-center">
                   <Play className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-xl font-heading mb-2">Tournament Not Started</h3>
-                  <p className="text-muted-foreground mb-6">Click "Start Tournament" to generate the first round</p>
+                  <p className="text-muted-foreground mb-2">The umpire will generate Round 1 to start the tournament</p>
+                  {tournament.umpire_name && (
+                    <p className="text-sm text-muted-foreground">Umpire: <span className="font-medium">{tournament.umpire_name}</span></p>
+                  )}
                 </CardContent>
               </Card>
             ) : currentMatches.length === 0 ? (
