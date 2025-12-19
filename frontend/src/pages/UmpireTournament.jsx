@@ -323,31 +323,47 @@ const UmpireTournament = () => {
               <Card className="floating-card border-stone-200">
                 <CardHeader>
                   <CardTitle className="text-2xl font-heading">Current Standings</CardTitle>
-                  <CardDescription>Based on verified matches only</CardDescription>
+                  <CardDescription>Based on verified matches only - Ranked by skin points, shot difference, shots for</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {teams.map((team, index) => (
-                      <div
-                        key={team.id}
-                        className="flex items-center justify-between p-4 rounded-lg border bg-white border-stone-200"
-                        data-testid={`team-rank-${index + 1}`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold bg-stone-100 text-stone-700">
-                            {index + 1}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-lg">{team.name}</p>
-                            <p className="text-sm text-muted-foreground">{team.matches_played} matches played</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-mono font-bold">{team.total_points.toFixed(1)}</p>
-                          <p className="text-sm text-muted-foreground">points</p>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-stone-200">
+                          <th className="text-left py-3 px-2 font-semibold text-sm">Pos</th>
+                          <th className="text-left py-3 px-2 font-semibold text-sm">Team</th>
+                          <th className="text-center py-3 px-2 font-semibold text-sm">P</th>
+                          <th className="text-center py-3 px-2 font-semibold text-sm">Pts</th>
+                          <th className="text-center py-3 px-2 font-semibold text-sm">SF</th>
+                          <th className="text-center py-3 px-2 font-semibold text-sm">SA</th>
+                          <th className="text-center py-3 px-2 font-semibold text-sm">SD</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {teams.map((team, index) => (
+                          <tr
+                            key={team.id}
+                            className="border-b border-stone-100 hover:bg-stone-50"
+                            data-testid={`team-rank-${index + 1}`}
+                          >
+                            <td className="py-3 px-2">
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-stone-100 text-stone-700">
+                                {index + 1}
+                              </div>
+                            </td>
+                            <td className="py-3 px-2 font-semibold">{team.name}</td>
+                            <td className="text-center py-3 px-2 font-mono">{team.matches_played}</td>
+                            <td className="text-center py-3 px-2 font-mono font-bold text-primary">{team.total_points.toFixed(1)}</td>
+                            <td className="text-center py-3 px-2 font-mono">{team.shots_for || 0}</td>
+                            <td className="text-center py-3 px-2 font-mono">{team.shots_against || 0}</td>
+                            <td className="text-center py-3 px-2 font-mono font-semibold">{team.shot_difference > 0 ? '+' : ''}{team.shot_difference || 0}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="mt-4 text-xs text-muted-foreground">
+                      <p><strong>P</strong> = Played, <strong>Pts</strong> = Skin Points, <strong>SF</strong> = Shots For, <strong>SA</strong> = Shots Against, <strong>SD</strong> = Shot Difference</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
