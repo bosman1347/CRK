@@ -1,15 +1,17 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
-import uuid
-from datetime import datetime, timezone
-
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from typing import List, Optional
+from datetime import datetime, timezone, timedelta
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+import random
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,54 +21,592 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
-app = FastAPI()
+# Security
+SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 10080  # 7 days
 
-# Create a router with the /api prefix
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+security = HTTPBearer()
+
+app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
+# Models
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class User(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    email: str
+    name: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: User
+
+class TournamentCreate(BaseModel):
+    name: str
+    teams: List[str]  # List of team names
+
+class Tournament(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    name: str
+    creator_id: str
+    status: str  # "setup", "active", "completed"
+    current_round: int
+    created_at: str
+
+class Team(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    tournament_id: str
+    name: str
+    total_points: float
+    matches_played: int
+    matches_won: int
+
+class Round(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    tournament_id: str
+    round_number: int
+    status: str  # "active", "completed"
+
+class SkinScores(BaseModel):
+    skin_number: int
+    team1_shots: int
+    team2_shots: int
+
+class Match(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    round_id: str
+    tournament_id: str
+    team1_id: str
+    team2_id: str
+    team1_name: str
+    team2_name: str
+    green: str  # "A" or "B"
+    rink: int  # 1-6
+    skin1_team1_shots: Optional[int] = None
+    skin1_team2_shots: Optional[int] = None
+    skin2_team1_shots: Optional[int] = None
+    skin2_team2_shots: Optional[int] = None
+    skin3_team1_shots: Optional[int] = None
+    skin3_team2_shots: Optional[int] = None
+    team1_skin_points: float = 0.0
+    team2_skin_points: float = 0.0
+    team1_match_points: float = 0.0
+    team2_match_points: float = 0.0
+    status: str = "pending"  # "pending", "in_progress", "completed"
+    completed_skins: int = 0
+
+# Helper functions
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+    return User(**user)
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
+def calculate_match_points(skin1_team1, skin1_team2, skin2_team1, skin2_team2, skin3_team1, skin3_team2):
+    """Calculate skin points and match points based on the complex scoring rules"""
+    team1_skin_points = 0.0
+    team2_skin_points = 0.0
     
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
+    # Calculate skin 1
+    if skin1_team1 > skin1_team2:
+        team1_skin_points += 1.0
+    elif skin1_team2 > skin1_team1:
+        team2_skin_points += 1.0
+    else:
+        team1_skin_points += 0.5
+        team2_skin_points += 0.5
     
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
+    # Calculate skin 2
+    if skin2_team1 > skin2_team2:
+        team1_skin_points += 1.0
+    elif skin2_team2 > skin2_team1:
+        team2_skin_points += 1.0
+    else:
+        team1_skin_points += 0.5
+        team2_skin_points += 0.5
+    
+    # Calculate skin 3
+    if skin3_team1 > skin3_team2:
+        team1_skin_points += 1.0
+    elif skin3_team2 > skin3_team1:
+        team2_skin_points += 1.0
+    else:
+        team1_skin_points += 0.5
+        team2_skin_points += 0.5
+    
+    # Calculate match points with 2-point bonus
+    team1_match_points = team1_skin_points
+    team2_match_points = team2_skin_points
+    
+    # Add 2-point bonus to team with more skin points
+    if team1_skin_points > team2_skin_points:
+        team1_match_points += 2.0
+    elif team2_skin_points > team1_skin_points:
+        team2_match_points += 2.0
+    else:
+        # If tied on skin points, bonus goes to team with more total shots
+        total_shots_team1 = skin1_team1 + skin2_team1 + skin3_team1
+        total_shots_team2 = skin1_team2 + skin2_team2 + skin3_team2
+        if total_shots_team1 > total_shots_team2:
+            team1_match_points += 2.0
+        elif total_shots_team2 > total_shots_team1:
+            team2_match_points += 2.0
+        else:
+            # Perfect tie - split bonus
+            team1_match_points += 1.0
+            team2_match_points += 1.0
+    
+    return team1_skin_points, team2_skin_points, team1_match_points, team2_match_points
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
+async def generate_draw(tournament_id: str, round_number: int):
+    """Generate match draw for a round"""
+    # Get all teams sorted by total points
+    teams = await db.teams.find({"tournament_id": tournament_id}, {"_id": 0}).sort("total_points", -1).to_list(None)
     
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
+    if len(teams) % 2 != 0:
+        raise HTTPException(status_code=400, detail="Number of teams must be even")
     
-    return status_checks
+    # Get match history to avoid repeats
+    history = await db.match_history.find({"tournament_id": tournament_id}, {"_id": 0}).to_list(None)
+    
+    # Create sets of previous matchups and rink usage per team
+    previous_matchups = set()
+    team_rinks = {}  # team_id -> set of (green, rink) tuples
+    
+    for h in history:
+        key = tuple(sorted([h["team1_id"], h["team2_id"]]))
+        previous_matchups.add(key)
+        
+        t1 = h["team1_id"]
+        t2 = h["team2_id"]
+        rink_key = (h["green"], h["rink"])
+        
+        if t1 not in team_rinks:
+            team_rinks[t1] = set()
+        if t2 not in team_rinks:
+            team_rinks[t2] = set()
+        team_rinks[t1].add(rink_key)
+        team_rinks[t2].add(rink_key)
+    
+    # Try to create matches
+    matches = []
+    available_teams = teams[:]
+    used_rinks = set()
+    
+    # Available rinks
+    all_rinks = [("A", i) for i in range(1, 7)] + [("B", i) for i in range(1, 7)]
+    
+    if round_number == 1:
+        # Random draw for first round
+        random.shuffle(available_teams)
+    
+    attempt = 0
+    max_attempts = 1000
+    
+    while len(available_teams) >= 2 and attempt < max_attempts:
+        attempt += 1
+        team1 = available_teams[0]
+        best_team2 = None
+        best_rink = None
+        best_score = -1
+        
+        # Try to find best pairing
+        for i in range(1, len(available_teams)):
+            team2 = available_teams[i]
+            matchup_key = tuple(sorted([team1["id"], team2["id"]]))
+            
+            # Check if they've played before
+            played_before = matchup_key in previous_matchups
+            
+            # Find a suitable rink
+            for rink in all_rinks:
+                if rink in used_rinks:
+                    continue
+                
+                # Check if teams have used this rink before
+                team1_used = rink in team_rinks.get(team1["id"], set())
+                team2_used = rink in team_rinks.get(team2["id"], set())
+                
+                # Calculate score (higher is better)
+                score = 0
+                if not played_before:
+                    score += 100
+                if not team1_used:
+                    score += 10
+                if not team2_used:
+                    score += 10
+                
+                if score > best_score:
+                    best_score = score
+                    best_team2 = team2
+                    best_rink = rink
+        
+        if best_team2 and best_rink:
+            matches.append({
+                "team1": team1,
+                "team2": best_team2,
+                "green": best_rink[0],
+                "rink": best_rink[1]
+            })
+            available_teams.remove(team1)
+            available_teams.remove(best_team2)
+            used_rinks.add(best_rink)
+        else:
+            # Fallback: just pair them anyway
+            if len(available_teams) >= 2:
+                team2 = available_teams[1]
+                # Find any available rink
+                for rink in all_rinks:
+                    if rink not in used_rinks:
+                        matches.append({
+                            "team1": team1,
+                            "team2": team2,
+                            "green": rink[0],
+                            "rink": rink[1]
+                        })
+                        available_teams.remove(team1)
+                        available_teams.remove(team2)
+                        used_rinks.add(rink)
+                        break
+    
+    return matches
 
-# Include the router in the main app
+# Auth routes
+@api_router.post("/auth/register", response_model=Token)
+async def register(user_data: UserRegister):
+    # Check if user exists
+    existing = await db.users.find_one({"email": user_data.email}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create user
+    import uuid
+    user_id = str(uuid.uuid4())
+    user_doc = {
+        "id": user_id,
+        "email": user_data.email,
+        "password_hash": get_password_hash(user_data.password),
+        "name": user_data.name,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.users.insert_one(user_doc)
+    
+    # Create token
+    access_token = create_access_token(data={"sub": user_id})
+    user = User(id=user_id, email=user_data.email, name=user_data.name)
+    
+    return Token(access_token=access_token, token_type="bearer", user=user)
+
+@api_router.post("/auth/login", response_model=Token)
+async def login(user_data: UserLogin):
+    user = await db.users.find_one({"email": user_data.email}, {"_id": 0})
+    if not user or not verify_password(user_data.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    access_token = create_access_token(data={"sub": user["id"]})
+    user_obj = User(id=user["id"], email=user["email"], name=user["name"])
+    
+    return Token(access_token=access_token, token_type="bearer", user=user_obj)
+
+# Tournament routes
+@api_router.post("/tournaments", response_model=Tournament)
+async def create_tournament(tournament_data: TournamentCreate, current_user: User = Depends(get_current_user)):
+    import uuid
+    tournament_id = str(uuid.uuid4())
+    
+    tournament_doc = {
+        "id": tournament_id,
+        "name": tournament_data.name,
+        "creator_id": current_user.id,
+        "status": "setup",
+        "current_round": 0,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.tournaments.insert_one(tournament_doc)
+    
+    # Create teams
+    for team_name in tournament_data.teams:
+        team_id = str(uuid.uuid4())
+        team_doc = {
+            "id": team_id,
+            "tournament_id": tournament_id,
+            "name": team_name,
+            "total_points": 0.0,
+            "matches_played": 0,
+            "matches_won": 0
+        }
+        await db.teams.insert_one(team_doc)
+    
+    return Tournament(**tournament_doc)
+
+@api_router.get("/tournaments", response_model=List[Tournament])
+async def get_tournaments(current_user: User = Depends(get_current_user)):
+    tournaments = await db.tournaments.find({"creator_id": current_user.id}, {"_id": 0}).to_list(None)
+    return [Tournament(**t) for t in tournaments]
+
+@api_router.get("/tournaments/{tournament_id}", response_model=Tournament)
+async def get_tournament(tournament_id: str, current_user: User = Depends(get_current_user)):
+    tournament = await db.tournaments.find_one({"id": tournament_id}, {"_id": 0})
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    return Tournament(**tournament)
+
+@api_router.post("/tournaments/{tournament_id}/start")
+async def start_tournament(tournament_id: str, current_user: User = Depends(get_current_user)):
+    tournament = await db.tournaments.find_one({"id": tournament_id}, {"_id": 0})
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    
+    if tournament["status"] != "setup":
+        raise HTTPException(status_code=400, detail="Tournament already started")
+    
+    # Generate round 1
+    import uuid
+    round_id = str(uuid.uuid4())
+    round_doc = {
+        "id": round_id,
+        "tournament_id": tournament_id,
+        "round_number": 1,
+        "status": "active"
+    }
+    await db.rounds.insert_one(round_doc)
+    
+    # Generate matches
+    matches = await generate_draw(tournament_id, 1)
+    
+    for match_data in matches:
+        match_id = str(uuid.uuid4())
+        match_doc = {
+            "id": match_id,
+            "round_id": round_id,
+            "tournament_id": tournament_id,
+            "team1_id": match_data["team1"]["id"],
+            "team2_id": match_data["team2"]["id"],
+            "team1_name": match_data["team1"]["name"],
+            "team2_name": match_data["team2"]["name"],
+            "green": match_data["green"],
+            "rink": match_data["rink"],
+            "skin1_team1_shots": None,
+            "skin1_team2_shots": None,
+            "skin2_team1_shots": None,
+            "skin2_team2_shots": None,
+            "skin3_team1_shots": None,
+            "skin3_team2_shots": None,
+            "team1_skin_points": 0.0,
+            "team2_skin_points": 0.0,
+            "team1_match_points": 0.0,
+            "team2_match_points": 0.0,
+            "status": "pending",
+            "completed_skins": 0
+        }
+        await db.matches.insert_one(match_doc)
+    
+    # Update tournament
+    await db.tournaments.update_one(
+        {"id": tournament_id},
+        {"$set": {"status": "active", "current_round": 1}}
+    )
+    
+    return {"message": "Tournament started", "round_id": round_id}
+
+@api_router.get("/tournaments/{tournament_id}/teams", response_model=List[Team])
+async def get_teams(tournament_id: str, current_user: User = Depends(get_current_user)):
+    teams = await db.teams.find({"tournament_id": tournament_id}, {"_id": 0}).to_list(None)
+    return [Team(**t) for t in teams]
+
+@api_router.get("/tournaments/{tournament_id}/rounds", response_model=List[Round])
+async def get_rounds(tournament_id: str, current_user: User = Depends(get_current_user)):
+    rounds = await db.rounds.find({"tournament_id": tournament_id}, {"_id": 0}).sort("round_number", 1).to_list(None)
+    return [Round(**r) for r in rounds]
+
+@api_router.get("/rounds/{round_id}/matches", response_model=List[Match])
+async def get_matches(round_id: str, current_user: User = Depends(get_current_user)):
+    matches = await db.matches.find({"round_id": round_id}, {"_id": 0}).to_list(None)
+    return [Match(**m) for m in matches]
+
+@api_router.get("/matches/{match_id}", response_model=Match)
+async def get_match(match_id: str, current_user: User = Depends(get_current_user)):
+    match = await db.matches.find_one({"id": match_id}, {"_id": 0})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    return Match(**match)
+
+@api_router.put("/matches/{match_id}/scores")
+async def update_match_scores(match_id: str, scores: SkinScores, current_user: User = Depends(get_current_user)):
+    match = await db.matches.find_one({"id": match_id}, {"_id": 0})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    # Update skin scores
+    skin_num = scores.skin_number
+    update_data = {
+        f"skin{skin_num}_team1_shots": scores.team1_shots,
+        f"skin{skin_num}_team2_shots": scores.team2_shots,
+        "completed_skins": max(match.get("completed_skins", 0), skin_num)
+    }
+    
+    # If updating means all skins are complete, calculate final points
+    if update_data["completed_skins"] >= 3:
+        skin1_t1 = match.get("skin1_team1_shots") if skin_num != 1 else scores.team1_shots
+        skin1_t2 = match.get("skin1_team2_shots") if skin_num != 1 else scores.team2_shots
+        skin2_t1 = match.get("skin2_team1_shots") if skin_num != 2 else scores.team1_shots
+        skin2_t2 = match.get("skin2_team2_shots") if skin_num != 2 else scores.team2_shots
+        skin3_t1 = match.get("skin3_team1_shots") if skin_num != 3 else scores.team1_shots
+        skin3_t2 = match.get("skin3_team2_shots") if skin_num != 3 else scores.team2_shots
+        
+        if all(x is not None for x in [skin1_t1, skin1_t2, skin2_t1, skin2_t2, skin3_t1, skin3_t2]):
+            t1_sp, t2_sp, t1_mp, t2_mp = calculate_match_points(
+                skin1_t1, skin1_t2, skin2_t1, skin2_t2, skin3_t1, skin3_t2
+            )
+            update_data.update({
+                "team1_skin_points": t1_sp,
+                "team2_skin_points": t2_sp,
+                "team1_match_points": t1_mp,
+                "team2_match_points": t2_mp,
+                "status": "completed"
+            })
+            
+            # Update team stats
+            await db.teams.update_one(
+                {"id": match["team1_id"]},
+                {"$inc": {"total_points": t1_mp, "matches_played": 1, "matches_won": 1 if t1_mp > t2_mp else 0}}
+            )
+            await db.teams.update_one(
+                {"id": match["team2_id"]},
+                {"$inc": {"total_points": t2_mp, "matches_played": 1, "matches_won": 1 if t2_mp > t1_mp else 0}}
+            )
+            
+            # Add to match history
+            import uuid
+            history_doc = {
+                "id": str(uuid.uuid4()),
+                "tournament_id": match["tournament_id"],
+                "team1_id": match["team1_id"],
+                "team2_id": match["team2_id"],
+                "green": match["green"],
+                "rink": match["rink"],
+                "round_number": (await db.rounds.find_one({"id": match["round_id"]}, {"_id": 0}))["round_number"]
+            }
+            await db.match_history.insert_one(history_doc)
+    elif update_data["completed_skins"] >= 1:
+        update_data["status"] = "in_progress"
+    
+    await db.matches.update_one({"id": match_id}, {"$set": update_data})
+    
+    return {"message": "Scores updated successfully"}
+
+@api_router.post("/tournaments/{tournament_id}/rounds/next")
+async def create_next_round(tournament_id: str, current_user: User = Depends(get_current_user)):
+    tournament = await db.tournaments.find_one({"id": tournament_id}, {"_id": 0})
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    
+    current_round_num = tournament["current_round"]
+    if current_round_num >= 7:
+        raise HTTPException(status_code=400, detail="Tournament already has 7 rounds")
+    
+    # Check if current round is complete
+    current_round = await db.rounds.find_one({"tournament_id": tournament_id, "round_number": current_round_num}, {"_id": 0})
+    if current_round:
+        matches = await db.matches.find({"round_id": current_round["id"]}, {"_id": 0}).to_list(None)
+        if any(m["status"] != "completed" for m in matches):
+            raise HTTPException(status_code=400, detail="Current round not yet completed")
+    
+    # Generate next round
+    import uuid
+    next_round_num = current_round_num + 1
+    round_id = str(uuid.uuid4())
+    round_doc = {
+        "id": round_id,
+        "tournament_id": tournament_id,
+        "round_number": next_round_num,
+        "status": "active"
+    }
+    await db.rounds.insert_one(round_doc)
+    
+    # Generate matches
+    matches = await generate_draw(tournament_id, next_round_num)
+    
+    for match_data in matches:
+        match_id = str(uuid.uuid4())
+        match_doc = {
+            "id": match_id,
+            "round_id": round_id,
+            "tournament_id": tournament_id,
+            "team1_id": match_data["team1"]["id"],
+            "team2_id": match_data["team2"]["id"],
+            "team1_name": match_data["team1"]["name"],
+            "team2_name": match_data["team2"]["name"],
+            "green": match_data["green"],
+            "rink": match_data["rink"],
+            "skin1_team1_shots": None,
+            "skin1_team2_shots": None,
+            "skin2_team1_shots": None,
+            "skin2_team2_shots": None,
+            "skin3_team1_shots": None,
+            "skin3_team2_shots": None,
+            "team1_skin_points": 0.0,
+            "team2_skin_points": 0.0,
+            "team1_match_points": 0.0,
+            "team2_match_points": 0.0,
+            "status": "pending",
+            "completed_skins": 0
+        }
+        await db.matches.insert_one(match_doc)
+    
+    # Update tournament
+    await db.tournaments.update_one(
+        {"id": tournament_id},
+        {"$set": {"current_round": next_round_num}}
+    )
+    
+    return {"message": f"Round {next_round_num} created", "round_id": round_id}
+
+@api_router.get("/tournaments/{tournament_id}/leaderboard", response_model=List[Team])
+async def get_leaderboard(tournament_id: str, current_user: User = Depends(get_current_user)):
+    teams = await db.teams.find({"tournament_id": tournament_id}, {"_id": 0}).sort("total_points", -1).to_list(None)
+    return [Team(**t) for t in teams]
+
 app.include_router(api_router)
 
 app.add_middleware(
@@ -77,7 +617,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
