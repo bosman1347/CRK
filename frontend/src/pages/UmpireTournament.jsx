@@ -216,13 +216,10 @@ const UmpireTournament = () => {
                           </DialogDescription>
                         </DialogHeader>
                         <div className="flex flex-col items-center space-y-4 py-4">
-                          {matches.length > 0 && matches[0].round_id && (
+                          {currentRound && currentRound.access_token && (
                             <>
                               <QRCodeSVG 
-                                value={`${FRONTEND_URL}/round/${(async () => {
-                                  const r = await db.rounds.find_one({ id: matches[0].round_id });
-                                  return r?.access_token || '';
-                                })()}`} 
+                                value={`${FRONTEND_URL}/round/${currentRound.access_token}`} 
                                 size={256} 
                               />
                               <div className="text-center">
