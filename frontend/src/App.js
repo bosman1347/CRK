@@ -45,6 +45,7 @@ function AppRoutes() {
       <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/tournaments/create" element={<PrivateRoute><CreateTournament /></PrivateRoute>} />
       <Route path="/tournaments/:id" element={<PrivateRoute><TournamentDetail /></PrivateRoute>} />
+      <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
       <Route path="/match/:token" element={<MatchScore />} />
       <Route path="/umpire" element={<UmpireRoute><UmpireDashboard /></UmpireRoute>} />
       <Route path="/umpire/tournaments/:id" element={<UmpireRoute><UmpireTournament /></UmpireRoute>} />
