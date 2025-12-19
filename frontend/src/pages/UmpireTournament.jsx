@@ -455,15 +455,15 @@ const UmpireTournament = () => {
                   </div>
                 );
               })}
-
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setVerifyingMatch(null)} className="flex-1">
-                  Cancel
-                </Button>
-                <Button onClick={verifyMatch} className="flex-1 bg-primary hover:bg-primary/90" data-testid="confirm-verify-button">
-                  Verify & Save
-                </Button>
-              </div>
+            </div>
+            
+            <div className="flex gap-3 pt-4 border-t">
+              <Button variant="outline" onClick={() => setVerifyingMatch(null)} className="flex-1">
+                Cancel
+              </Button>
+              <Button onClick={verifyMatch} className="flex-1 bg-primary hover:bg-primary/90" data-testid="confirm-verify-button">
+                Verify & Save
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
