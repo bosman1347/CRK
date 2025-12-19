@@ -234,10 +234,8 @@ const TournamentDetail = () => {
                           )}
                         </div>
                         {match.status !== 'completed' && (
-                          <div className="pt-2">
-                            <Button className="w-full bg-primary hover:bg-primary/90" size="sm" data-testid={`enter-scores-${match.id}`}>
-                              Enter Scores
-                            </Button>
+                          <div className="pt-2 text-center">
+                            <p className="text-xs text-muted-foreground">Players enter scores via QR code</p>
                           </div>
                         )}
                       </CardContent>
