@@ -467,6 +467,16 @@ async def get_tournament(tournament_id: str, current_user: User = Depends(get_cu
         raise HTTPException(status_code=404, detail="Tournament not found")
     return Tournament(**tournament)
 
+@api_router.get("/tournaments/{tournament_id}/teams", response_model=List[Team])
+async def get_teams(tournament_id: str, current_user: User = Depends(get_current_user)):
+    teams = await db.teams.find({"tournament_id": tournament_id}, {"_id": 0}).to_list(None)
+    return [Team(**t) for t in teams]
+
+@api_router.get("/tournaments/{tournament_id}/rounds", response_model=List[Round])
+async def get_rounds(tournament_id: str, current_user: User = Depends(get_current_user)):
+    rounds = await db.rounds.find({"tournament_id": tournament_id}, {"_id": 0}).sort("round_number", 1).to_list(None)
+    return [Round(**r) for r in rounds]
+
 # Umpire routes
 @api_router.get("/umpire/tournaments")
 async def get_umpire_tournaments(current_user: User = Depends(get_current_umpire)):
