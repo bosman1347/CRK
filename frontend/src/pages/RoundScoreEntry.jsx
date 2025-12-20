@@ -183,9 +183,6 @@ const RoundScoreEntry = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="font-medium text-sm">{match.team1_name}</span>
-                        {match.team1_scores_entered && !match.verified && (
-                          <Badge className="text-xs bg-blue-100 text-blue-700">✓</Badge>
-                        )}
                         {match.verified && (
                           <span className="font-mono text-sm font-bold">{match.team1_match_points.toFixed(1)}</span>
                         )}
@@ -193,13 +190,15 @@ const RoundScoreEntry = () => {
                       <div className="text-center text-xs text-muted-foreground">vs</div>
                       <div className="flex justify-between items-center">
                         <span className="font-medium text-sm">{match.team2_name}</span>
-                        {match.team2_scores_entered && !match.verified && (
-                          <Badge className="text-xs bg-blue-100 text-blue-700">✓</Badge>
-                        )}
                         {match.verified && (
                           <span className="font-mono text-sm font-bold">{match.team2_match_points.toFixed(1)}</span>
                         )}
                       </div>
+                      {match.team1_scores_entered && !match.verified && (
+                        <div className="mt-2 pt-2 border-t">
+                          <Badge className="text-xs bg-blue-100 text-blue-700">Scores Entered - Awaiting Verification</Badge>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
