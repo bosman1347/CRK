@@ -722,11 +722,23 @@ async def submit_match_scores(token: str, match_id: str, score_entry: TeamScoreE
     
     # Update the score
     field_name = f"skin{skin_num}_team{team_num}_shots"
-    entered_field = f"team{team_num}_scores_entered"
+    
+    # Mark that scores have been entered (by either team)
+    update_data = {field_name: score_entry.shots}
+    
+    # Check if all 6 scores are now filled
+    updated_match = await db.matches.find_one({"id": match_id}, {"_id": 0})
+    all_scores_filled = all([
+        updated_match.get(f"skin{s}_team{t}_shots") is not None 
+        for s in [1, 2, 3] for t in [1, 2]
+    ])
+    
+    if all_scores_filled or score_entry.shots is not None:
+        update_data["team1_scores_entered"] = True  # Using as "scores_entered" flag
     
     await db.matches.update_one(
         {"id": match_id},
-        {"$set": {field_name: score_entry.shots, entered_field: True}}
+        {"$set": update_data}
     )
     
     return {"message": "Score submitted successfully"}
