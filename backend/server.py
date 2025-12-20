@@ -74,6 +74,10 @@ class Tournament(BaseModel):
     status: str
     current_round: int
     created_at: str
+    scoring_type: str = "skins"
+    player_format: str = "pairs"
+    num_ends: int = 15
+    draw_type_round2: str = "strength"
 
 class Team(BaseModel):
     model_config = ConfigDict(extra="ignore")
