@@ -211,94 +211,95 @@ const RoundScoreEntry = () => {
           {selectedMatch && !selectedMatch.verified && (
             <Card className="floating-card border-stone-200">
               <CardHeader>
-                <CardTitle className="text-2xl font-heading">Enter Scores</CardTitle>
+                <CardTitle className="text-2xl font-heading">Enter Match Scores</CardTitle>
                 <CardDescription>
                   Match: {selectedMatch.team1_name} vs {selectedMatch.team2_name} (Green {selectedMatch.green}, Rink {selectedMatch.rink})
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Team Selection */}
-                {!selectedTeam && (
-                  <div className="space-y-3">
-                    <Label>Select Your Team</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button
-                        onClick={() => setSelectedTeam(selectedMatch.team1_name)}
-                        variant="outline"
-                        className="h-auto py-4"
-                        data-testid="select-team1"
-                      >
-                        {selectedMatch.team1_name}
-                      </Button>
-                      <Button
-                        onClick={() => setSelectedTeam(selectedMatch.team2_name)}
-                        variant="outline"
-                        className="h-auto py-4"
-                        data-testid="select-team2"
-                      >
-                        {selectedMatch.team2_name}
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-900 font-semibold mb-1">Either team can enter scores for this match</p>
+                  <p className="text-xs text-blue-800">Enter the shot totals for both teams after each 5-end skin. The umpire will verify before finalizing.</p>
+                </div>
 
-                {selectedTeam && (
-                  <>
-                    <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
-                      <span className="font-semibold">Entering for: {selectedTeam}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => { setSelectedTeam(''); setScores({ skin1: '', skin2: '', skin3: '' }); }}
-                        data-testid="change-team"
-                      >
-                        Change
-                      </Button>
-                    </div>
-
-                    {/* Skin Score Entry */}
-                    <div className="space-y-4">
-                      {[1, 2, 3].map((skinNum) => {
-                        const existingScore = getScoreForTeamAndSkin(selectedMatch, teamNumber, skinNum);
-                        return (
-                          <div key={skinNum} className="space-y-3" data-testid={`skin${skinNum}-section`}>
-                            <div className="flex items-center justify-between">
-                              <h4 className="font-semibold">Skin {skinNum}</h4>
-                              {existingScore !== null && (
-                                <Badge className="bg-green-100 text-green-700">Saved: {existingScore}</Badge>
-                              )}
-                            </div>
-                            <div className="flex gap-3">
-                              <Input
-                                type="number"
-                                min="0"
-                                placeholder="Enter shots scored"
-                                value={scores[`skin${skinNum}`]}
-                                onChange={(e) => setScores({ ...scores, [`skin${skinNum}`]: e.target.value })}
-                                className="flex-1"
-                                data-testid={`skin${skinNum}-input`}
-                              />
-                              <Button
-                                onClick={() => submitScore(skinNum)}
-                                className="bg-primary hover:bg-primary/90"
-                                data-testid={`submit-skin${skinNum}`}
-                              >
-                                <Save className="w-4 h-4 mr-2" />
-                                Save
-                              </Button>
-                            </div>
+                {/* Skin Score Entry */}
+                <div className="space-y-6">
+                  {[1, 2, 3].map((skinNum) => {
+                    const team1Score = getScoreForTeamAndSkin(selectedMatch, 1, skinNum);
+                    const team2Score = getScoreForTeamAndSkin(selectedMatch, 2, skinNum);
+                    
+                    return (
+                      <div key={skinNum} className="space-y-3" data-testid={`skin${skinNum}-section`}>
+                        <div className="flex items-center justify-between border-b pb-2">
+                          <h4 className="font-semibold text-lg">Skin {skinNum}</h4>
+                          <span className="text-xs text-muted-foreground">Ends {(skinNum-1)*5+1}-{skinNum*5}</span>
+                        </div>
+                        
+                        {/* Team 1 */}
+                        <div className="space-y-2">
+                          <Label className="text-base">{selectedMatch.team1_name}</Label>
+                          <div className="flex gap-3">
+                            <Input
+                              type="number"
+                              min="0"
+                              placeholder="Shots scored"
+                              value={scores[`skin${skinNum}_team1`]}
+                              onChange={(e) => setScores({ ...scores, [`skin${skinNum}_team1`]: e.target.value })}
+                              className="flex-1"
+                              data-testid={`skin${skinNum}-team1-input`}
+                            />
+                            <Button
+                              onClick={() => submitScore(skinNum, 1)}
+                              className="bg-primary hover:bg-primary/90"
+                              data-testid={`submit-skin${skinNum}-team1`}
+                              size="sm"
+                            >
+                              <Save className="w-4 h-4 mr-1" />
+                              Save
+                            </Button>
                           </div>
-                        );
-                      })}
-                    </div>
+                          {team1Score !== null && (
+                            <Badge className="bg-green-100 text-green-700">Saved: {team1Score}</Badge>
+                          )}
+                        </div>
 
-                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-                      <p className="text-xs text-amber-800">
-                        Enter the total shots your team scored in each 5-end skin. You can modify scores until the umpire verifies the match.
-                      </p>
-                    </div>
-                  </>
-                )}
+                        {/* Team 2 */}
+                        <div className="space-y-2">
+                          <Label className="text-base">{selectedMatch.team2_name}</Label>
+                          <div className="flex gap-3">
+                            <Input
+                              type="number"
+                              min="0"
+                              placeholder="Shots scored"
+                              value={scores[`skin${skinNum}_team2`]}
+                              onChange={(e) => setScores({ ...scores, [`skin${skinNum}_team2`]: e.target.value })}
+                              className="flex-1"
+                              data-testid={`skin${skinNum}-team2-input`}
+                            />
+                            <Button
+                              onClick={() => submitScore(skinNum, 2)}
+                              className="bg-primary hover:bg-primary/90"
+                              data-testid={`submit-skin${skinNum}-team2`}
+                              size="sm"
+                            >
+                              <Save className="w-4 h-4 mr-1" />
+                              Save
+                            </Button>
+                          </div>
+                          {team2Score !== null && (
+                            <Badge className="bg-green-100 text-green-700">Saved: {team2Score}</Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <p className="text-xs text-amber-800">
+                    <strong>Note:</strong> Enter scores for both teams. You can save each score individually. The umpire will verify all scores before they're added to the standings.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           )}
