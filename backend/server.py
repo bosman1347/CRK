@@ -123,6 +123,7 @@ class Match(BaseModel):
     team2_name: str
     green: str
     rink: int
+    # Skins scoring fields
     skin1_team1_shots: Optional[int] = None
     skin1_team2_shots: Optional[int] = None
     skin2_team1_shots: Optional[int] = None
@@ -131,6 +132,9 @@ class Match(BaseModel):
     skin3_team2_shots: Optional[int] = None
     team1_skin_points: float = 0.0
     team2_skin_points: float = 0.0
+    # Standard scoring fields
+    end_scores: Optional[List[dict]] = None  # [{end: 1, team1: 2, team2: 0}, ...]
+    # Common fields
     team1_match_points: float = 0.0
     team2_match_points: float = 0.0
     team1_total_shots: int = 0
