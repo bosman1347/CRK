@@ -417,8 +417,8 @@ const UmpireTournament = () => {
               <div>
                 <h4 className="font-semibold mb-2">{verifyingMatch.team1_name} vs {verifyingMatch.team2_name}</h4>
                 <p className="text-sm text-muted-foreground">Green {verifyingMatch.green} - Rink {verifyingMatch.rink}</p>
-                {verifyingMatch.team1_scores_entered && verifyingMatch.team2_scores_entered && (
-                  <Badge className="bg-blue-100 text-blue-700 mt-2">Both teams entered scores</Badge>
+                {verifyingMatch.team1_scores_entered && (
+                  <Badge className="bg-blue-100 text-blue-700 mt-2">Players have entered scores - verify with paper scorecard</Badge>
                 )}
               </div>
 
