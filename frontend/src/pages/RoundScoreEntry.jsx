@@ -19,11 +19,13 @@ const RoundScoreEntry = () => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState(null);
-  const [selectedTeam, setSelectedTeam] = useState('');
   const [scores, setScores] = useState({
-    skin1: '',
-    skin2: '',
-    skin3: ''
+    skin1_team1: '',
+    skin1_team2: '',
+    skin2_team1: '',
+    skin2_team2: '',
+    skin3_team1: '',
+    skin3_team2: ''
   });
 
   useEffect(() => {
