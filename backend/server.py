@@ -59,6 +59,10 @@ class TournamentCreate(BaseModel):
     name: str
     teams: List[str]
     umpire_email: str
+    scoring_type: str = "skins"  # "skins" or "standard"
+    player_format: Optional[str] = "pairs"  # "singles", "pairs", "trips", "fours"
+    num_ends: Optional[int] = 15  # For standard scoring
+    draw_type_round2: Optional[str] = "strength"  # "random" or "strength"
 
 class Tournament(BaseModel):
     model_config = ConfigDict(extra="ignore")
