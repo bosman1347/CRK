@@ -542,6 +542,9 @@ async def umpire_generate_round(tournament_id: str, current_user: User = Depends
     # Generate matches
     matches = await generate_draw(tournament_id, next_round_num)
     
+    tournament = await db.tournaments.find_one({"id": tournament_id}, {"_id": 0})
+    is_standard_scoring = tournament.get("scoring_type") == "standard"
+    
     for match_data in matches:
         match_id = str(uuid.uuid4())
         match_doc = {
