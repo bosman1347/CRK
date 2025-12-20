@@ -44,14 +44,13 @@ const RoundScoreEntry = () => {
     }
   };
 
-  const submitScore = async (skinNumber) => {
-    if (!selectedMatch || !selectedTeam) {
-      toast.error('Please select your match and team first');
+  const submitScore = async (skinNumber, teamNumber) => {
+    if (!selectedMatch) {
+      toast.error('Please select your match first');
       return;
     }
 
-    const teamNumber = selectedTeam === selectedMatch.team1_name ? 1 : 2;
-    const shotValue = parseInt(scores[`skin${skinNumber}`]);
+    const shotValue = parseInt(scores[`skin${skinNumber}_team${teamNumber}`]);
 
     if (isNaN(shotValue) || shotValue < 0) {
       toast.error('Please enter a valid score (0 or greater)');
@@ -64,9 +63,8 @@ const RoundScoreEntry = () => {
         skin_number: skinNumber,
         shots: shotValue
       });
-      toast.success(`Skin ${skinNumber} score submitted!`);
+      toast.success(`Skin ${skinNumber} Team ${teamNumber} score saved!`);
       fetchRound();
-      setScores({ ...scores, [`skin${skinNumber}`]: '' });
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to submit score');
     }
