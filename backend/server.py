@@ -440,6 +440,10 @@ async def create_tournament(tournament_data: TournamentCreate, current_user: Use
         "umpire_name": umpire["name"],
         "status": "setup",
         "current_round": 0,
+        "scoring_type": tournament_data.scoring_type,
+        "player_format": tournament_data.player_format,
+        "num_ends": tournament_data.num_ends,
+        "draw_type_round2": tournament_data.draw_type_round2,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
