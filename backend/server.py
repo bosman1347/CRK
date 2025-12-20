@@ -567,6 +567,8 @@ async def umpire_generate_round(tournament_id: str, current_user: User = Depends
             "team2_skin_points": 0.0,
             "team1_match_points": 0.0,
             "team2_match_points": 0.0,
+            "team1_total_shots": 0,
+            "team2_total_shots": 0,
             "team1_scores_entered": False,
             "team2_scores_entered": False,
             "verified": False,
@@ -574,6 +576,11 @@ async def umpire_generate_round(tournament_id: str, current_user: User = Depends
             "verified_at": None,
             "status": "pending"
         }
+        
+        # Add end_scores for standard scoring
+        if is_standard_scoring:
+            match_doc["end_scores"] = []
+        
         await db.matches.insert_one(match_doc)
     
     # Update tournament
