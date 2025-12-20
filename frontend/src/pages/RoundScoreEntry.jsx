@@ -135,8 +135,6 @@ const RoundScoreEntry = () => {
     );
   }
 
-  const teamNumber = selectedMatch && selectedTeam ? (selectedTeam === selectedMatch.team1_name ? 1 : 2) : null;
-
   return (
     <div className="min-h-screen bg-background">
       <div className="gradient-hero text-white py-12">
