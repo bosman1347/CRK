@@ -288,17 +288,17 @@ const UmpireTournament = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="p-4 bg-stone-50 rounded-lg">
                             <p className="font-semibold mb-2">{match.team1_name}</p>
-                            {match.team1_scores_entered && (
-                              <Badge className="bg-blue-100 text-blue-700 text-xs">Scores Entered</Badge>
-                            )}
                           </div>
                           <div className="p-4 bg-stone-50 rounded-lg">
                             <p className="font-semibold mb-2">{match.team2_name}</p>
-                            {match.team2_scores_entered && (
-                              <Badge className="bg-blue-100 text-blue-700 text-xs">Scores Entered</Badge>
-                            )}
                           </div>
                         </div>
+                        
+                        {match.team1_scores_entered && !match.verified && (
+                          <div className="mt-3">
+                            <Badge className="bg-blue-100 text-blue-700">Scores Entered - Ready to Verify</Badge>
+                          </div>
+                        )}
 
                         <div className="print:hidden">
 
