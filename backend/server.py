@@ -889,6 +889,48 @@ async def submit_match_scores(token: str, match_id: str, score_entry: TeamScoreE
     
     return {"message": "Score submitted successfully"}
 
+@api_router.post("/rounds/by-token/{token}/matches/{match_id}/standard-scores")
+async def submit_standard_scores(token: str, match_id: str, score_entry: StandardScoreEntry):
+    """Submit final scores for a standard scoring match"""
+    # Verify round token
+    round_data = await db.rounds.find_one({"access_token": token}, {"_id": 0})
+    if not round_data:
+        raise HTTPException(status_code=404, detail="Round not found")
+    
+    # Get tournament to verify scoring type
+    tournament = await db.tournaments.find_one({"id": round_data["tournament_id"]}, {"_id": 0})
+    if not tournament or tournament.get("scoring_type") != "standard":
+        raise HTTPException(status_code=400, detail="This endpoint is for standard scoring tournaments")
+    
+    # Get match
+    match = await db.matches.find_one({"id": match_id, "round_id": round_data["id"]}, {"_id": 0})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    if match["verified"]:
+        raise HTTPException(status_code=400, detail="Match already verified - scores cannot be changed")
+    
+    if score_entry.team1_shots < 0 or score_entry.team2_shots < 0:
+        raise HTTPException(status_code=400, detail="Shots cannot be negative")
+    
+    # For singles, max is 21
+    player_format = tournament.get("player_format", "pairs")
+    if player_format == "singles" and (score_entry.team1_shots > 21 or score_entry.team2_shots > 21):
+        raise HTTPException(status_code=400, detail="Singles matches have max 21 shots")
+    
+    # Update match with pending scores (awaiting umpire verification)
+    await db.matches.update_one(
+        {"id": match_id},
+        {"$set": {
+            "team1_total_shots": score_entry.team1_shots,
+            "team2_total_shots": score_entry.team2_shots,
+            "team1_scores_entered": True,
+            "team2_scores_entered": True
+        }}
+    )
+    
+    return {"message": "Scores submitted successfully - awaiting verification"}
+
 # Public routes
 @api_router.get("/public/tournaments/{tournament_id}/standings")
 async def get_public_standings(tournament_id: str):
