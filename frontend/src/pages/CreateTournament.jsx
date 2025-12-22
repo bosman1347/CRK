@@ -352,10 +352,7 @@ const CreateTournament = () => {
                   <br />
                   • Maximum 24 teams (12 matches per round)
                   <br />
-                  {scoringType === 'skins' 
-                    ? '• Skins tournaments: 7 rounds total'
-                    : '• Standard tournaments: Rounds set by organizer (typically 2 rounds)'
-                  }
+                  • {numRounds} round{numRounds !== 1 ? 's' : ''} total
                 </p>
               </div>
 
