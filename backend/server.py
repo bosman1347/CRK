@@ -178,9 +178,23 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     return User(**user)
 
 async def get_current_umpire(current_user: User = Depends(get_current_user)):
-    if not current_user.is_umpire:
-        raise HTTPException(status_code=403, detail="Umpire access required")
+    # Umpires always have access
+    if current_user.is_umpire:
+        return current_user
+    # Non-umpires can also access (organizers can manage their tournaments)
     return current_user
+
+async def get_tournament_manager(tournament_id: str, current_user: User = Depends(get_current_user)):
+    """Verify user can manage this tournament (is umpire OR creator)"""
+    tournament = await db.tournaments.find_one({"id": tournament_id}, {"_id": 0})
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    
+    # Allow if user is the umpire OR the creator
+    if tournament.get("umpire_id") == current_user.id or tournament.get("creator_id") == current_user.id:
+        return current_user, tournament
+    
+    raise HTTPException(status_code=403, detail="Access denied - must be tournament umpire or creator")
 
 def calculate_match_points(skin1_team1, skin1_team2, skin2_team1, skin2_team2, skin3_team1, skin3_team2):
     """Calculate skin points and match points based on the complex scoring rules"""
