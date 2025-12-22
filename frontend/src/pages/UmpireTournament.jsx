@@ -225,7 +225,7 @@ const UmpireTournament = () => {
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-4xl md:text-5xl font-heading mb-2" data-testid="tournament-name">{tournament.name}</h1>
-              <p className="text-lg text-emerald-100">Round {tournament.current_round} of 7</p>
+              <p className="text-lg text-emerald-100">Round {tournament.current_round} of {tournament.num_rounds || 7}</p>
               <Badge className="mt-2 bg-white/20 text-white">
                 {isStandardScoring ? 'Standard Scoring' : 'Skins Scoring'} - {tournament.player_format}
               </Badge>
