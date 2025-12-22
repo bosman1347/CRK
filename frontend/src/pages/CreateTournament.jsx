@@ -140,7 +140,7 @@ const CreateTournament = () => {
               <Trophy className="w-8 h-8 text-primary" />
               Tournament Details
             </CardTitle>
-            <CardDescription>Set up your lawn bowls tournament with 7 rounds</CardDescription>
+            <CardDescription>Set up your lawn bowls tournament</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6" data-testid="create-tournament-form">
