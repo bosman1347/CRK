@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { toast } from 'sonner';
 import { Trophy } from 'lucide-react';
 
+const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_matchtrack-6/artifacts/e3x9cy2y_cropped-Cent-Rolbal-logo.png";
+
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -35,12 +37,13 @@ const Register = () => {
       <Card className="w-full max-w-md glass-card border-stone-200" data-testid="register-card">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center">
-              <Trophy className="w-8 h-8 text-white" />
-            </div>
+            <img src={CLUB_LOGO} alt="Centurion Lawn Bowls Club" className="w-24 h-24 object-contain" />
           </div>
-          <CardTitle className="text-3xl font-heading">Create Account</CardTitle>
-          <CardDescription className="text-base">Join BowlsManager Pro</CardDescription>
+          <div>
+            <CardTitle className="text-2xl font-heading">Centurion Lawn Bowls Club</CardTitle>
+            <p className="text-sm text-muted-foreground">Centurion Rolbalklub</p>
+          </div>
+          <CardDescription className="text-base">Create your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4" data-testid="register-form">
