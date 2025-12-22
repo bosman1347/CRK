@@ -184,6 +184,92 @@ const UmpireTournament = () => {
     }, 500);
   };
 
+  const printQRCode = () => {
+    if (!currentRoundData || !currentRoundData.access_token) {
+      toast.error('Round data not loaded');
+      return;
+    }
+    
+    // Create a new window with just the QR code
+    const printWindow = window.open('', '_blank');
+    const qrUrl = `${FRONTEND_URL}/round/${currentRoundData.access_token}`;
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${tournament.name} - Round ${tournament.current_round} QR Code</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px;
+            text-align: center;
+          }
+          .container {
+            max-width: 500px;
+          }
+          h1 { 
+            font-size: 28px; 
+            margin-bottom: 8px;
+            color: #1a1a1a;
+          }
+          h2 { 
+            font-size: 22px; 
+            margin-bottom: 30px;
+            color: #059669;
+            font-weight: 600;
+          }
+          .qr-container {
+            padding: 20px;
+            border: 3px solid #059669;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            display: inline-block;
+          }
+          .instructions {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.6;
+          }
+          .instructions strong {
+            color: #1a1a1a;
+          }
+          @media print {
+            body { padding: 20px; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>${tournament.name}</h1>
+          <h2>Round ${tournament.current_round} of ${tournament.num_rounds || 7}</h2>
+          <div class="qr-container">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrUrl)}" alt="QR Code" width="300" height="300" />
+          </div>
+          <p class="instructions">
+            <strong>Scan this QR code with your phone</strong><br/>
+            to enter your match scores
+          </p>
+        </div>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 500);
+          };
+        </script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const getRinkColor = (green) => {
     return green === 'A' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700';
   };
