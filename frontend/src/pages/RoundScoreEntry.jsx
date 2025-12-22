@@ -199,11 +199,21 @@ const RoundScoreEntry = () => {
           <p className="text-lg text-emerald-100">
             {isStandardScoring ? 'Enter final shot totals' : 'Enter scores for each skin'}
           </p>
-          {tournament && (
-            <Badge className="mt-2 bg-white/20 text-white">
-              {isStandardScoring ? 'Standard Scoring' : 'Skins Scoring'} - {tournament.player_format}
-            </Badge>
-          )}
+          <div className="flex items-center gap-3 mt-3">
+            {tournament && (
+              <Badge className="bg-white/20 text-white">
+                {isStandardScoring ? 'Standard Scoring' : 'Skins Scoring'} - {tournament.player_format}
+              </Badge>
+            )}
+            {tournament && (
+              <Link to={`/standings/${tournament.id}`}>
+                <Button variant="outline" size="sm" className="bg-white/10 text-white border-white/30 hover:bg-white/20">
+                  <Trophy className="w-4 h-4 mr-2" />
+                  View Standings
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
