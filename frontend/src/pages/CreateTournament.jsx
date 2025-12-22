@@ -204,7 +204,7 @@ const CreateTournament = () => {
                   >
                     <div className="font-semibold mb-1">Standard Scoring</div>
                     <div className="text-xs text-muted-foreground">
-                      End-by-end, highest total wins
+                      Final shots entered, highest total wins
                     </div>
                   </button>
                 </div>
