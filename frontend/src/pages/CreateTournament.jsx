@@ -263,8 +263,11 @@ const CreateTournament = () => {
 
                   <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <p className="text-xs text-blue-900">
-                      <strong>Standard Scoring:</strong> Winner is the team with most shots. 
-                      Standings ranked by: Total Points → Shot Difference → Shots For
+                      <strong>Standard Scoring:</strong> Teams enter final shot totals only.{' '}
+                      {playerFormat === 'singles' 
+                        ? 'Singles: First to 21 shots wins.' 
+                        : 'Winner has highest shot total.'}
+                      {' '}Standings: Match Points (Win=2, Draw=1) → Total Shots → Shot Difference
                     </p>
                   </div>
                 </div>
