@@ -189,7 +189,13 @@ const RoundScoreEntry = () => {
     <div className="min-h-screen bg-background">
       <div className="gradient-hero text-white py-12">
         <div className="container mx-auto px-6">
-          <h1 className="text-4xl md:text-5xl font-heading mb-2" data-testid="round-title">Round {roundData.round_number} Score Entry</h1>
+          <div className="flex items-center gap-4 mb-4">
+            <img src={CLUB_LOGO} alt="Centurion Lawn Bowls Club" className="w-16 h-16 object-contain bg-white/10 rounded-lg p-1" />
+            <div>
+              <p className="text-sm text-emerald-200">Centurion Lawn Bowls Club</p>
+              <h1 className="text-3xl md:text-4xl font-heading" data-testid="round-title">Round {roundData.round_number} Score Entry</h1>
+            </div>
+          </div>
           <p className="text-lg text-emerald-100">
             {isStandardScoring ? 'Enter final shot totals' : 'Enter scores for each skin'}
           </p>
