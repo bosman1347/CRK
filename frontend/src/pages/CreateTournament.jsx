@@ -285,6 +285,25 @@ const CreateTournament = () => {
                 </div>
               )}
 
+              {/* Number of Rounds */}
+              <div className="space-y-2">
+                <Label htmlFor="num-rounds">Number of Rounds: {numRounds}</Label>
+                <input
+                  id="num-rounds"
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={numRounds}
+                  onChange={(e) => setNumRounds(parseInt(e.target.value))}
+                  className="w-full"
+                  data-testid="num-rounds-slider"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>1</span>
+                  <span>10</span>
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <Label>Teams ({teams.filter(t => t.trim()).length}/24)</Label>
