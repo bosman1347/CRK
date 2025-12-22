@@ -339,6 +339,16 @@ const UmpireTournament = () => {
               </Badge>
             </div>
             <div className="flex gap-3">
+              <Link to={`/standings/${id}`} target="_blank">
+                <Button
+                  variant="outline"
+                  className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+                  data-testid="standings-button"
+                >
+                  <Trophy className="w-4 h-4 mr-2" />
+                  Public Standings
+                </Button>
+              </Link>
               {matches.length > 0 && (
                 <>
                   <Button
