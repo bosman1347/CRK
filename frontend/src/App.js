@@ -33,8 +33,7 @@ const UmpireRoute = ({ children }) => {
   }
   
   if (!user) return <Navigate to="/login" />;
-  if (!user.is_umpire) return <Navigate to="/" />;
-  
+  // Allow all authenticated users (organizers can also manage tournaments)
   return children;
 };
 
