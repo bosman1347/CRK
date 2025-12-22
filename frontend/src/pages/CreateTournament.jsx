@@ -73,9 +73,19 @@ const CreateTournament = () => {
 
     setLoading(true);
     try {
+      const tournamentData = {
+        name: tournamentName,
+        teams: validTeams,
+        umpire_email: umpireEmail,
+        scoring_type: scoringType,
+        player_format: playerFormat,
+        num_ends: numEnds,
+        draw_type_round2: drawTypeRound2
+      };
+      
       const response = await axios.post(
         `${API}/tournaments`,
-        { name: tournamentName, teams: validTeams, umpire_email: umpireEmail },
+        tournamentData,
         { headers: getAuthHeader() }
       );
       
