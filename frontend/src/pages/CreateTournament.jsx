@@ -173,6 +173,113 @@ const CreateTournament = () => {
                 </p>
               </div>
 
+              {/* Scoring Type Selection */}
+              <div className="space-y-3 border-t pt-4">
+                <Label className="text-base font-semibold">Scoring Type</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setScoringType('skins')}
+                    className={`p-4 border-2 rounded-lg text-left transition-all ${
+                      scoringType === 'skins'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-stone-200 hover:border-stone-300'
+                    }`}
+                    data-testid="skins-scoring-button"
+                  >
+                    <div className="font-semibold mb-1">Skins Scoring</div>
+                    <div className="text-xs text-muted-foreground">
+                      3 skins per match, bonus points system
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setScoringType('standard')}
+                    className={`p-4 border-2 rounded-lg text-left transition-all ${
+                      scoringType === 'standard'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-stone-200 hover:border-stone-300'
+                    }`}
+                    data-testid="standard-scoring-button"
+                  >
+                    <div className="font-semibold mb-1">Standard Scoring</div>
+                    <div className="text-xs text-muted-foreground">
+                      End-by-end, highest total wins
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Standard Scoring Options */}
+              {scoringType === 'standard' && (
+                <div className="space-y-4 border-l-4 border-primary pl-4 bg-primary/5 p-4 rounded-r-lg">
+                  <div className="space-y-2">
+                    <Label htmlFor="player-format">Player Format</Label>
+                    <select
+                      id="player-format"
+                      value={playerFormat}
+                      onChange={(e) => setPlayerFormat(e.target.value)}
+                      className="w-full p-2 border border-stone-300 rounded-md"
+                      data-testid="player-format-select"
+                    >
+                      <option value="singles">Singles (1 player per team)</option>
+                      <option value="pairs">Pairs (2 players per team)</option>
+                      <option value="trips">Trips (3 players per team)</option>
+                      <option value="fours">Fours (4 players per team)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="num-ends">Number of Ends: {numEnds}</Label>
+                    <input
+                      id="num-ends"
+                      type="range"
+                      min="12"
+                      max="21"
+                      value={numEnds}
+                      onChange={(e) => setNumEnds(parseInt(e.target.value))}
+                      className="w-full"
+                      data-testid="num-ends-slider"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>12</span>
+                      <span>21</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="draw-type">Draw Type (Round 2 onwards)</Label>
+                    <select
+                      id="draw-type"
+                      value={drawTypeRound2}
+                      onChange={(e) => setDrawTypeRound2(e.target.value)}
+                      className="w-full p-2 border border-stone-300 rounded-md"
+                      data-testid="draw-type-select"
+                    >
+                      <option value="random">Random (avoid repeats)</option>
+                      <option value="strength">Strength vs Strength (by standings)</option>
+                    </select>
+                  </div>
+
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-xs text-blue-900">
+                      <strong>Standard Scoring:</strong> Winner is the team with most shots. 
+                      Standings ranked by: Total Points → Shot Difference → Shots For
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Skins Scoring Info */}
+              {scoringType === 'skins' && (
+                <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                  <p className="text-xs text-amber-900">
+                    <strong>Skins Scoring:</strong> 15 ends, 3 skins of 5 ends each. 
+                    Winner of each skin gets 1 point. Team with most skin points gets +2 bonus.
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <Label>Teams ({teams.filter(t => t.trim()).length}/24)</Label>
