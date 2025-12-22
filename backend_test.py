@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class LawnBowlsAPITester:
-    def __init__(self, base_url="https://lawn-bowls-draw.preview.emergentagent.com"):
+    def __init__(self, base_url="https://matchtrack-6.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
