@@ -55,8 +55,8 @@ const UmpireDashboard = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Main Dashboard
           </Button>
-          <h1 className="text-4xl md:text-5xl font-heading" data-testid="umpire-dashboard-title">Umpire Dashboard</h1>
-          <p className="text-lg text-emerald-100 mt-2">Manage tournament rounds and verify scores</p>
+          <h1 className="text-4xl md:text-5xl font-heading" data-testid="umpire-dashboard-title">Tournament Management</h1>
+          <p className="text-lg text-emerald-100 mt-2">Manage rounds, verify scores, and track standings</p>
         </div>
       </div>
 
