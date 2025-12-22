@@ -107,7 +107,8 @@ const CreateTournament = () => {
         toast.success('Tournament created successfully!');
       }
       
-      navigate(`/tournaments/${data.tournament.id}`);
+      // Navigate to management page where rounds can be generated
+      navigate(`/umpire/tournaments/${data.tournament.id}`);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to create tournament');
     } finally {
