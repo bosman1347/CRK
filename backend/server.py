@@ -727,6 +727,97 @@ async def verify_match(match_id: str, verification: UmpireVerification, current_
     
     return {"message": "Match verified successfully"}
 
+@api_router.post("/umpire/matches/{match_id}/verify-standard")
+async def verify_standard_match(match_id: str, verification: StandardScoreVerification, current_user: User = Depends(get_current_user)):
+    """Verify a standard scoring match with final shot totals"""
+    match = await db.matches.find_one({"id": match_id}, {"_id": 0})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    # Verify user has access to this tournament
+    tournament = await db.tournaments.find_one({"id": match["tournament_id"]}, {"_id": 0})
+    if tournament.get("umpire_id") != current_user.id and tournament.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if tournament.get("scoring_type") != "standard":
+        raise HTTPException(status_code=400, detail="This endpoint is for standard scoring only")
+    
+    if match["verified"]:
+        raise HTTPException(status_code=400, detail="Match already verified")
+    
+    t1_shots = verification.team1_shots
+    t2_shots = verification.team2_shots
+    
+    # For singles, max is 21
+    player_format = tournament.get("player_format", "pairs")
+    if player_format == "singles" and (t1_shots > 21 or t2_shots > 21):
+        raise HTTPException(status_code=400, detail="Singles matches have max 21 shots")
+    
+    # Calculate match points: Win=2, Draw=1, Loss=0
+    if t1_shots > t2_shots:
+        t1_mp = 2.0
+        t2_mp = 0.0
+    elif t2_shots > t1_shots:
+        t1_mp = 0.0
+        t2_mp = 2.0
+    else:
+        t1_mp = 1.0
+        t2_mp = 1.0
+    
+    # Update match
+    await db.matches.update_one(
+        {"id": match_id},
+        {"$set": {
+            "team1_total_shots": t1_shots,
+            "team2_total_shots": t2_shots,
+            "team1_match_points": t1_mp,
+            "team2_match_points": t2_mp,
+            "verified": True,
+            "verified_by": current_user.id,
+            "verified_at": datetime.now(timezone.utc).isoformat(),
+            "status": "completed"
+        }}
+    )
+    
+    # Update team stats
+    await db.teams.update_one(
+        {"id": match["team1_id"]},
+        {"$inc": {
+            "total_points": t1_mp,
+            "matches_played": 1,
+            "matches_won": 1 if t1_mp > t2_mp else 0,
+            "shots_for": t1_shots,
+            "shots_against": t2_shots,
+            "shot_difference": t1_shots - t2_shots
+        }}
+    )
+    await db.teams.update_one(
+        {"id": match["team2_id"]},
+        {"$inc": {
+            "total_points": t2_mp,
+            "matches_played": 1,
+            "matches_won": 1 if t2_mp > t1_mp else 0,
+            "shots_for": t2_shots,
+            "shots_against": t1_shots,
+            "shot_difference": t2_shots - t1_shots
+        }}
+    )
+    
+    # Add to match history
+    import uuid
+    history_doc = {
+        "id": str(uuid.uuid4()),
+        "tournament_id": match["tournament_id"],
+        "team1_id": match["team1_id"],
+        "team2_id": match["team2_id"],
+        "green": match["green"],
+        "rink": match["rink"],
+        "round_number": (await db.rounds.find_one({"id": match["round_id"]}, {"_id": 0}))["round_number"]
+    }
+    await db.match_history.insert_one(history_doc)
+    
+    return {"message": "Standard match verified successfully"}
+
 # Public token-based score entry (by round)
 @api_router.get("/rounds/by-token/{token}")
 async def get_round_by_token(token: str):
