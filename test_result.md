@@ -101,3 +101,130 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  Lawn Bowls Tournament management app with two scoring modes: Skins and Standard.
+  Standard Scoring: Teams enter final shot totals, Win=2pts, Draw=1pt, Loss=0pts.
+  Organizers should have full access (same capabilities as Umpire).
+
+backend:
+  - task: "Standard scoring tournament creation API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "POST /api/tournaments now accepts scoring_type='standard', player_format, num_ends, draw_type_round2"
+
+  - task: "Standard scoring verification API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "POST /api/umpire/matches/{id}/verify-standard - Win=2, Draw=1, Loss=0 working correctly"
+
+  - task: "Standard scoring submission API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "POST /api/rounds/by-token/{token}/matches/{id}/standard-scores working"
+
+  - task: "Organizer full access to umpire routes"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Updated all umpire routes to allow tournament creator access"
+
+frontend:
+  - task: "Standard scoring form in CreateTournament"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/CreateTournament.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "UI already in place: scoring type selector, player format, num ends, draw type"
+
+  - task: "Standard scoring entry page for players"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/RoundScoreEntry.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Updated to show simple final score entry for standard scoring"
+
+  - task: "Standard scoring verification UI"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/UmpireTournament.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Updated verification dialog with simple team1/team2 shots input"
+
+  - task: "Dashboard manage tournaments button for all users"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Dashboard.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Removed is_umpire check, all users see 'Manage Tournaments' button"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: true
+
+test_plan:
+  current_focus:
+    - "Standard scoring frontend flow"
+    - "Organizer can manage tournaments"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Implemented Standard Scoring feature. Backend APIs tested via curl and working correctly.
+      Need frontend testing for:
+      1. Create tournament with standard scoring type
+      2. Player score entry page for standard scoring
+      3. Umpire verification dialog for standard scoring
+      4. All users can access 'Manage Tournaments' page
