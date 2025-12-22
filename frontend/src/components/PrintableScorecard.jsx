@@ -1,5 +1,7 @@
 import { QRCodeSVG } from 'qrcode.react';
 
+const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_matchtrack-6/artifacts/e3x9cy2y_cropped-Cent-Rolbal-logo.png";
+
 const PrintableScorecard = ({ round, matches, qrUrl, tournamentName }) => {
   // Group matches into pairs for 2-per-page layout
   const matchPairs = [];
@@ -62,13 +64,19 @@ const PrintableScorecard = ({ round, matches, qrUrl, tournamentName }) => {
         <div key={pairIndex} className="scorecard-pair">
           {pair.map((match, index) => (
             <div key={match.id} className="scorecard-single">
-              {/* Header */}
+              {/* Header with Club Logo */}
               <div style={{ textAlign: 'center', marginBottom: '10px', borderBottom: '2px solid #000', paddingBottom: '8px' }}>
-                <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 3px 0', fontFamily: 'serif' }}>
-                  {tournamentName}
-                </h1>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '5px' }}>
+                  <img src={CLUB_LOGO} alt="Club Logo" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+                  <div>
+                    <h1 style={{ fontSize: '14px', fontWeight: 'bold', margin: '0', fontFamily: 'serif' }}>
+                      Centurion Lawn Bowls Club
+                    </h1>
+                    <p style={{ fontSize: '10px', margin: '0', color: '#666' }}>Centurion Rolbalklub</p>
+                  </div>
+                </div>
                 <p style={{ fontSize: '13px', margin: '0', fontWeight: '600' }}>
-                  Round {round.round_number} Scorecard
+                  {tournamentName} - Round {round.round_number}
                 </p>
               </div>
 
