@@ -515,17 +515,26 @@ async def get_rounds(tournament_id: str, current_user: User = Depends(get_curren
     rounds = await db.rounds.find({"tournament_id": tournament_id}, {"_id": 0}).sort("round_number", 1).to_list(None)
     return [Round(**r) for r in rounds]
 
-# Umpire routes
+# Umpire routes (now accessible to organizers too)
 @api_router.get("/umpire/tournaments")
-async def get_umpire_tournaments(current_user: User = Depends(get_current_umpire)):
-    tournaments = await db.tournaments.find({"umpire_id": current_user.id}, {"_id": 0}).to_list(None)
+async def get_umpire_tournaments(current_user: User = Depends(get_current_user)):
+    # Get tournaments where user is umpire OR creator
+    tournaments = await db.tournaments.find(
+        {"$or": [{"umpire_id": current_user.id}, {"creator_id": current_user.id}]}, 
+        {"_id": 0}
+    ).to_list(None)
     return [Tournament(**t) for t in tournaments]
 
 @api_router.post("/umpire/tournaments/{tournament_id}/rounds/generate")
-async def umpire_generate_round(tournament_id: str, current_user: User = Depends(get_current_umpire)):
-    tournament = await db.tournaments.find_one({"id": tournament_id, "umpire_id": current_user.id}, {"_id": 0})
+async def umpire_generate_round(tournament_id: str, current_user: User = Depends(get_current_user)):
+    # Check if user can manage this tournament
+    tournament = await db.tournaments.find_one({"id": tournament_id}, {"_id": 0})
     if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament not found or access denied")
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    
+    # Allow if user is umpire OR creator
+    if tournament.get("umpire_id") != current_user.id and tournament.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
     
     current_round_num = tournament["current_round"]
     
