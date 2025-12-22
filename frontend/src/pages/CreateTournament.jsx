@@ -80,6 +80,7 @@ const CreateTournament = () => {
         scoring_type: scoringType,
         player_format: playerFormat,
         num_ends: numEnds,
+        num_rounds: numRounds,
         draw_type_round2: drawTypeRound2
       };
       
