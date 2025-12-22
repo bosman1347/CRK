@@ -26,6 +26,8 @@ const UmpireTournament = () => {
   const [currentRound, setCurrentRound] = useState(null);
   const [loading, setLoading] = useState(true);
   const [verifyingMatch, setVerifyingMatch] = useState(null);
+  
+  // Skins verification scores
   const [verifyScores, setVerifyScores] = useState({
     skin1_team1_shots: '',
     skin1_team2_shots: '',
@@ -34,6 +36,13 @@ const UmpireTournament = () => {
     skin3_team1_shots: '',
     skin3_team2_shots: ''
   });
+  
+  // Standard verification scores
+  const [standardVerifyScores, setStandardVerifyScores] = useState({
+    team1_shots: '',
+    team2_shots: ''
+  });
+  
   const [currentRoundData, setCurrentRoundData] = useState(null);
   const { getAuthHeader } = useAuth();
   const navigate = useNavigate();
@@ -48,7 +57,16 @@ const UmpireTournament = () => {
       setTournament(tournamentRes.data);
 
       const teamsRes = await axios.get(`${API}/tournaments/${id}/teams`, { headers: getAuthHeader() });
-      setTeams(teamsRes.data.sort((a, b) => b.total_points - a.total_points));
+      // Sort teams based on scoring type
+      const sortedTeams = teamsRes.data.sort((a, b) => {
+        // Primary: total_points (desc)
+        if (b.total_points !== a.total_points) return b.total_points - a.total_points;
+        // Secondary: shot_difference (desc)
+        if ((b.shot_difference || 0) !== (a.shot_difference || 0)) return (b.shot_difference || 0) - (a.shot_difference || 0);
+        // Tertiary: shots_for (desc)
+        return (b.shots_for || 0) - (a.shots_for || 0);
+      });
+      setTeams(sortedTeams);
 
       if (tournamentRes.data.current_round > 0) {
         const roundsRes = await axios.get(`${API}/tournaments/${id}/rounds`, { headers: getAuthHeader() });
@@ -77,38 +95,74 @@ const UmpireTournament = () => {
 
   const openVerifyDialog = (match) => {
     setVerifyingMatch(match);
-    setVerifyScores({
-      skin1_team1_shots: match.skin1_team1_shots !== null ? match.skin1_team1_shots : '',
-      skin1_team2_shots: match.skin1_team2_shots !== null ? match.skin1_team2_shots : '',
-      skin2_team1_shots: match.skin2_team1_shots !== null ? match.skin2_team1_shots : '',
-      skin2_team2_shots: match.skin2_team2_shots !== null ? match.skin2_team2_shots : '',
-      skin3_team1_shots: match.skin3_team1_shots !== null ? match.skin3_team1_shots : '',
-      skin3_team2_shots: match.skin3_team2_shots !== null ? match.skin3_team2_shots : ''
-    });
+    
+    if (isStandardScoring) {
+      setStandardVerifyScores({
+        team1_shots: match.team1_total_shots !== null ? match.team1_total_shots : '',
+        team2_shots: match.team2_total_shots !== null ? match.team2_total_shots : ''
+      });
+    } else {
+      setVerifyScores({
+        skin1_team1_shots: match.skin1_team1_shots !== null ? match.skin1_team1_shots : '',
+        skin1_team2_shots: match.skin1_team2_shots !== null ? match.skin1_team2_shots : '',
+        skin2_team1_shots: match.skin2_team1_shots !== null ? match.skin2_team1_shots : '',
+        skin2_team2_shots: match.skin2_team2_shots !== null ? match.skin2_team2_shots : '',
+        skin3_team1_shots: match.skin3_team1_shots !== null ? match.skin3_team1_shots : '',
+        skin3_team2_shots: match.skin3_team2_shots !== null ? match.skin3_team2_shots : ''
+      });
+    }
   };
 
   const verifyMatch = async () => {
-    const scores = {
-      skin1_team1_shots: parseInt(verifyScores.skin1_team1_shots),
-      skin1_team2_shots: parseInt(verifyScores.skin1_team2_shots),
-      skin2_team1_shots: parseInt(verifyScores.skin2_team1_shots),
-      skin2_team2_shots: parseInt(verifyScores.skin2_team2_shots),
-      skin3_team1_shots: parseInt(verifyScores.skin3_team1_shots),
-      skin3_team2_shots: parseInt(verifyScores.skin3_team2_shots)
-    };
+    if (isStandardScoring) {
+      const team1Shots = parseInt(standardVerifyScores.team1_shots);
+      const team2Shots = parseInt(standardVerifyScores.team2_shots);
+      
+      if (isNaN(team1Shots) || isNaN(team2Shots)) {
+        toast.error('Both scores must be valid numbers');
+        return;
+      }
+      
+      // Validate singles max
+      if (tournament?.player_format === 'singles' && (team1Shots > 21 || team2Shots > 21)) {
+        toast.error('Singles matches have max 21 shots');
+        return;
+      }
 
-    if (Object.values(scores).some(isNaN)) {
-      toast.error('All scores must be valid numbers');
-      return;
-    }
+      try {
+        await axios.post(`${API}/umpire/matches/${verifyingMatch.id}/verify-standard`, {
+          team1_shots: team1Shots,
+          team2_shots: team2Shots
+        }, { headers: getAuthHeader() });
+        toast.success('Match verified successfully!');
+        setVerifyingMatch(null);
+        fetchData();
+      } catch (error) {
+        toast.error(error.response?.data?.detail || 'Failed to verify match');
+      }
+    } else {
+      const scores = {
+        skin1_team1_shots: parseInt(verifyScores.skin1_team1_shots),
+        skin1_team2_shots: parseInt(verifyScores.skin1_team2_shots),
+        skin2_team1_shots: parseInt(verifyScores.skin2_team1_shots),
+        skin2_team2_shots: parseInt(verifyScores.skin2_team2_shots),
+        skin3_team1_shots: parseInt(verifyScores.skin3_team1_shots),
+        skin3_team2_shots: parseInt(verifyScores.skin3_team2_shots)
+      };
 
-    try {
-      await axios.post(`${API}/umpire/matches/${verifyingMatch.id}/verify`, scores, { headers: getAuthHeader() });
-      toast.success('Match verified successfully!');
-      setVerifyingMatch(null);
-      fetchData();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to verify match');
+      if (Object.values(scores).some(isNaN)) {
+        toast.error('All scores must be valid numbers');
+        return;
+      }
+
+      try {
+        await axios.post(`${API}/umpire/matches/${verifyingMatch.id}/verify`, scores, { headers: getAuthHeader() });
+        toast.success('Match verified successfully!');
+        setVerifyingMatch(null);
+        fetchData();
+      } catch (error) {
+        toast.error(error.response?.data?.detail || 'Failed to verify match');
+      }
     }
   };
 
@@ -133,6 +187,8 @@ const UmpireTournament = () => {
   const getRinkColor = (green) => {
     return green === 'A' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700';
   };
+  
+  const isStandardScoring = tournament?.scoring_type === 'standard';
 
   if (loading) {
     return (
@@ -164,12 +220,15 @@ const UmpireTournament = () => {
             data-testid="back-button"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Umpire Dashboard
+            Back to Dashboard
           </Button>
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-4xl md:text-5xl font-heading mb-2" data-testid="tournament-name">{tournament.name}</h1>
               <p className="text-lg text-emerald-100">Round {tournament.current_round} of 7</p>
+              <Badge className="mt-2 bg-white/20 text-white">
+                {isStandardScoring ? 'Standard Scoring' : 'Skins Scoring'} - {tournament.player_format}
+              </Badge>
             </div>
             <div className="flex gap-3">
               {matches.length > 0 && (
@@ -288,9 +347,15 @@ const UmpireTournament = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="p-4 bg-stone-50 rounded-lg">
                             <p className="font-semibold mb-2">{match.team1_name}</p>
+                            {match.team1_scores_entered && !match.verified && isStandardScoring && (
+                              <p className="text-sm text-muted-foreground">Entered: {match.team1_total_shots} shots</p>
+                            )}
                           </div>
                           <div className="p-4 bg-stone-50 rounded-lg">
                             <p className="font-semibold mb-2">{match.team2_name}</p>
+                            {match.team2_scores_entered && !match.verified && isStandardScoring && (
+                              <p className="text-sm text-muted-foreground">Entered: {match.team2_total_shots} shots</p>
+                            )}
                           </div>
                         </div>
                         
@@ -319,13 +384,31 @@ const UmpireTournament = () => {
                               <div className="grid grid-cols-2 gap-2 text-sm">
                                 <div>
                                   <p className="font-semibold">{match.team1_name}</p>
-                                  <p className="text-2xl font-mono font-bold text-primary">{match.team1_match_points.toFixed(1)}</p>
-                                  <p className="text-xs text-muted-foreground">{match.team1_skin_points.toFixed(1)} skin points</p>
+                                  {isStandardScoring ? (
+                                    <>
+                                      <p className="text-2xl font-mono font-bold text-primary">{match.team1_total_shots}</p>
+                                      <p className="text-xs text-muted-foreground">{match.team1_match_points.toFixed(0)} match pts</p>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <p className="text-2xl font-mono font-bold text-primary">{match.team1_match_points.toFixed(1)}</p>
+                                      <p className="text-xs text-muted-foreground">{match.team1_skin_points.toFixed(1)} skin points</p>
+                                    </>
+                                  )}
                                 </div>
                                 <div>
                                   <p className="font-semibold">{match.team2_name}</p>
-                                  <p className="text-2xl font-mono font-bold text-primary">{match.team2_match_points.toFixed(1)}</p>
-                                  <p className="text-xs text-muted-foreground">{match.team2_skin_points.toFixed(1)} skin points</p>
+                                  {isStandardScoring ? (
+                                    <>
+                                      <p className="text-2xl font-mono font-bold text-primary">{match.team2_total_shots}</p>
+                                      <p className="text-xs text-muted-foreground">{match.team2_match_points.toFixed(0)} match pts</p>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <p className="text-2xl font-mono font-bold text-primary">{match.team2_match_points.toFixed(1)}</p>
+                                      <p className="text-xs text-muted-foreground">{match.team2_skin_points.toFixed(1)} skin points</p>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -342,7 +425,11 @@ const UmpireTournament = () => {
               <Card className="floating-card border-stone-200">
                 <CardHeader>
                   <CardTitle className="text-2xl font-heading">Current Standings</CardTitle>
-                  <CardDescription>Based on verified matches only - Ranked by skin points, shot difference, shots for</CardDescription>
+                  <CardDescription>
+                    {isStandardScoring 
+                      ? 'Ranked by: Match Points → Shot Difference → Shots For' 
+                      : 'Ranked by: Skin Points → Shot Difference → Shots For'}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
@@ -352,7 +439,7 @@ const UmpireTournament = () => {
                           <th className="text-left py-3 px-2 font-semibold text-sm">Pos</th>
                           <th className="text-left py-3 px-2 font-semibold text-sm">Team</th>
                           <th className="text-center py-3 px-2 font-semibold text-sm">P</th>
-                          <th className="text-center py-3 px-2 font-semibold text-sm">Pts</th>
+                          <th className="text-center py-3 px-2 font-semibold text-sm">{isStandardScoring ? 'MP' : 'Pts'}</th>
                           <th className="text-center py-3 px-2 font-semibold text-sm">SF</th>
                           <th className="text-center py-3 px-2 font-semibold text-sm">SA</th>
                           <th className="text-center py-3 px-2 font-semibold text-sm">SD</th>
@@ -372,7 +459,9 @@ const UmpireTournament = () => {
                             </td>
                             <td className="py-3 px-2 font-semibold">{team.name}</td>
                             <td className="text-center py-3 px-2 font-mono">{team.matches_played}</td>
-                            <td className="text-center py-3 px-2 font-mono font-bold text-primary">{team.total_points.toFixed(1)}</td>
+                            <td className="text-center py-3 px-2 font-mono font-bold text-primary">
+                              {isStandardScoring ? team.total_points.toFixed(0) : team.total_points.toFixed(1)}
+                            </td>
                             <td className="text-center py-3 px-2 font-mono">{team.shots_for || 0}</td>
                             <td className="text-center py-3 px-2 font-mono">{team.shots_against || 0}</td>
                             <td className="text-center py-3 px-2 font-mono font-semibold">{team.shot_difference > 0 ? '+' : ''}{team.shot_difference || 0}</td>
@@ -381,7 +470,11 @@ const UmpireTournament = () => {
                       </tbody>
                     </table>
                     <div className="mt-4 text-xs text-muted-foreground">
-                      <p><strong>P</strong> = Played, <strong>Pts</strong> = Skin Points, <strong>SF</strong> = Shots For, <strong>SA</strong> = Shots Against, <strong>SD</strong> = Shot Difference</p>
+                      {isStandardScoring ? (
+                        <p><strong>P</strong> = Played, <strong>MP</strong> = Match Points (Win=2, Draw=1), <strong>SF</strong> = Shots For, <strong>SA</strong> = Shots Against, <strong>SD</strong> = Shot Difference</p>
+                      ) : (
+                        <p><strong>P</strong> = Played, <strong>Pts</strong> = Skin Points, <strong>SF</strong> = Shots For, <strong>SA</strong> = Shots Against, <strong>SD</strong> = Shot Difference</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -399,12 +492,93 @@ const UmpireTournament = () => {
             matches={matches}
             qrUrl={`${FRONTEND_URL}/round/${currentRoundData.access_token}`}
             tournamentName={tournament.name}
+            scoringType={tournament.scoring_type}
           />
         </div>
       )}
 
-      {/* Verify Match Dialog */}
-      {verifyingMatch && (
+      {/* Verify Match Dialog - Standard Scoring */}
+      {verifyingMatch && isStandardScoring && (
+        <Dialog open={!!verifyingMatch} onOpenChange={() => setVerifyingMatch(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Verify Match Scores</DialogTitle>
+              <DialogDescription>
+                Review and confirm final scores from paper scorecard
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6 py-4">
+              <div>
+                <h4 className="font-semibold mb-2">{verifyingMatch.team1_name} vs {verifyingMatch.team2_name}</h4>
+                <p className="text-sm text-muted-foreground">Green {verifyingMatch.green} - Rink {verifyingMatch.rink}</p>
+                {verifyingMatch.team1_scores_entered && (
+                  <Badge className="bg-blue-100 text-blue-700 mt-2">Players have entered scores - verify with paper scorecard</Badge>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-base font-semibold">{verifyingMatch.team1_name}</Label>
+                  {verifyingMatch.team1_total_shots !== null && verifyingMatch.team1_total_shots > 0 && (
+                    <div className="text-xs text-muted-foreground mb-1">
+                      <Badge className="bg-blue-100 text-blue-700">Player entered: {verifyingMatch.team1_total_shots}</Badge>
+                    </div>
+                  )}
+                  <Input
+                    type="number"
+                    min="0"
+                    max={tournament?.player_format === 'singles' ? 21 : undefined}
+                    placeholder="Final shots"
+                    value={standardVerifyScores.team1_shots}
+                    onChange={(e) => setStandardVerifyScores({ ...standardVerifyScores, team1_shots: e.target.value })}
+                    className="text-lg"
+                    data-testid="team1-verify-input"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-base font-semibold">{verifyingMatch.team2_name}</Label>
+                  {verifyingMatch.team2_total_shots !== null && verifyingMatch.team2_total_shots > 0 && (
+                    <div className="text-xs text-muted-foreground mb-1">
+                      <Badge className="bg-blue-100 text-blue-700">Player entered: {verifyingMatch.team2_total_shots}</Badge>
+                    </div>
+                  )}
+                  <Input
+                    type="number"
+                    min="0"
+                    max={tournament?.player_format === 'singles' ? 21 : undefined}
+                    placeholder="Final shots"
+                    value={standardVerifyScores.team2_shots}
+                    onChange={(e) => setStandardVerifyScores({ ...standardVerifyScores, team2_shots: e.target.value })}
+                    className="text-lg"
+                    data-testid="team2-verify-input"
+                  />
+                </div>
+              </div>
+              
+              {tournament?.player_format === 'singles' && (
+                <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                  <p className="text-xs text-amber-800">
+                    <strong>Singles:</strong> Maximum 21 shots per player
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-3 pt-4 border-t">
+              <Button variant="outline" onClick={() => setVerifyingMatch(null)} className="flex-1">
+                Cancel
+              </Button>
+              <Button onClick={verifyMatch} className="flex-1 bg-primary hover:bg-primary/90" data-testid="confirm-verify-button">
+                Verify & Save
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Verify Match Dialog - Skins Scoring */}
+      {verifyingMatch && !isStandardScoring && (
         <Dialog open={!!verifyingMatch} onOpenChange={() => setVerifyingMatch(null)}>
           <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
             <DialogHeader>
