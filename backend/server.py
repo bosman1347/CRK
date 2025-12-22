@@ -615,15 +615,33 @@ async def umpire_generate_round(tournament_id: str, current_user: User = Depends
     return {"message": f"Round {next_round_num} created", "round_id": round_id}
 
 @api_router.get("/umpire/rounds/{round_id}/matches")
-async def get_umpire_round_matches(round_id: str, current_user: User = Depends(get_current_umpire)):
+async def get_umpire_round_matches(round_id: str, current_user: User = Depends(get_current_user)):
+    # Verify user has access to this round's tournament
+    round_data = await db.rounds.find_one({"id": round_id}, {"_id": 0})
+    if not round_data:
+        raise HTTPException(status_code=404, detail="Round not found")
+    
+    tournament = await db.tournaments.find_one({"id": round_data["tournament_id"]}, {"_id": 0})
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    
+    # Check access
+    if tournament.get("umpire_id") != current_user.id and tournament.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
     matches = await db.matches.find({"round_id": round_id}, {"_id": 0}).to_list(None)
     return [Match(**m) for m in matches]
 
 @api_router.post("/umpire/matches/{match_id}/verify")
-async def verify_match(match_id: str, verification: UmpireVerification, current_user: User = Depends(get_current_umpire)):
+async def verify_match(match_id: str, verification: UmpireVerification, current_user: User = Depends(get_current_user)):
     match = await db.matches.find_one({"id": match_id}, {"_id": 0})
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
+    
+    # Verify user has access to this tournament
+    tournament = await db.tournaments.find_one({"id": match["tournament_id"]}, {"_id": 0})
+    if tournament.get("umpire_id") != current_user.id and tournament.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
     
     if match["verified"]:
         raise HTTPException(status_code=400, detail="Match already verified")
