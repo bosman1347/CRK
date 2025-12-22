@@ -825,12 +825,18 @@ async def get_round_by_token(token: str):
     if not round_data:
         raise HTTPException(status_code=404, detail="Round not found")
     
+    # Get tournament info
+    tournament = await db.tournaments.find_one({"id": round_data["tournament_id"]}, {"_id": 0})
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    
     # Get all matches for this round
     matches = await db.matches.find({"round_id": round_data["id"]}, {"_id": 0}).to_list(None)
     
     return {
         "round": Round(**round_data),
-        "matches": [Match(**m) for m in matches]
+        "matches": [Match(**m) for m in matches],
+        "tournament": Tournament(**tournament)
     }
 
 @api_router.post("/rounds/by-token/{token}/matches/{match_id}/scores")
