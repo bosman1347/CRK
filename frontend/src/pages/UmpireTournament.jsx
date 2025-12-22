@@ -207,7 +207,8 @@ const UmpireTournament = () => {
   }
 
   const allMatchesVerified = matches.length > 0 && matches.every(m => m.verified);
-  const canGenerateNextRound = tournament.current_round < 7 && allMatchesVerified;
+  const maxRounds = tournament.num_rounds || 7;
+  const canGenerateNextRound = tournament.current_round < maxRounds && allMatchesVerified;
 
   return (
     <div className="min-h-screen bg-background">
