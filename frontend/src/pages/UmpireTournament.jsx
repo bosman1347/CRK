@@ -215,14 +215,31 @@ const UmpireTournament = () => {
           .container {
             max-width: 500px;
           }
+          .logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 10px;
+          }
+          .club-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+          }
+          .club-name-alt {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+          }
           h1 { 
-            font-size: 28px; 
+            font-size: 22px; 
             margin-bottom: 8px;
             color: #1a1a1a;
           }
           h2 { 
-            font-size: 22px; 
-            margin-bottom: 30px;
+            font-size: 18px; 
+            margin-bottom: 25px;
             color: #059669;
             font-weight: 600;
           }
@@ -230,7 +247,7 @@ const UmpireTournament = () => {
             padding: 20px;
             border: 3px solid #059669;
             border-radius: 16px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             display: inline-block;
           }
           .instructions {
@@ -248,6 +265,9 @@ const UmpireTournament = () => {
       </head>
       <body>
         <div class="container">
+          <img src="${CLUB_LOGO}" alt="Club Logo" class="logo" />
+          <p class="club-name">Centurion Lawn Bowls Club</p>
+          <p class="club-name-alt">Centurion Rolbalklub</p>
           <h1>${tournament.name}</h1>
           <h2>Round ${tournament.current_round} of ${tournament.num_rounds || 7}</h2>
           <div class="qr-container">
