@@ -112,6 +112,14 @@ class UmpireVerification(BaseModel):
     skin3_team1_shots: int
     skin3_team2_shots: int
 
+class StandardScoreVerification(BaseModel):
+    team1_shots: int
+    team2_shots: int
+
+class StandardScoreEntry(BaseModel):
+    team1_shots: int
+    team2_shots: int
+
 class Match(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
