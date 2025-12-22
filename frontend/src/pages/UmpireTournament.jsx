@@ -413,12 +413,15 @@ const UmpireTournament = () => {
                                 <p className="text-xs text-muted-foreground">{matches.length} matches</p>
                               </div>
                               <Button 
-                                onClick={() => printQRCode()} 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  printQRCode();
+                                }} 
                                 className="w-full bg-primary hover:bg-primary/90"
                                 data-testid="print-qr-button"
                               >
                                 <Printer className="w-4 h-4 mr-2" />
-                                Print QR Code
+                                Print QR Code Only
                               </Button>
                             </>
                           )}
