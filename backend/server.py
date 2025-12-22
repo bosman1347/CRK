@@ -557,8 +557,9 @@ async def umpire_generate_round(tournament_id: str, current_user: User = Depends
             if any(not m["verified"] for m in matches):
                 raise HTTPException(status_code=400, detail="All matches must be verified before generating next round")
     
-    if current_round_num >= 7:
-        raise HTTPException(status_code=400, detail="Tournament already has 7 rounds")
+    max_rounds = tournament.get("num_rounds", 7)
+    if current_round_num >= max_rounds:
+        raise HTTPException(status_code=400, detail=f"Tournament already has {max_rounds} rounds")
     
     import uuid
     next_round_num = current_round_num + 1
