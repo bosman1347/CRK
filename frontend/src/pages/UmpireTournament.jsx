@@ -17,6 +17,7 @@ import PrintableScorecard from '../components/PrintableScorecard';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const FRONTEND_URL = window.location.origin;
+const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_matchtrack-6/artifacts/e3x9cy2y_cropped-Cent-Rolbal-logo.png";
 
 const UmpireTournament = () => {
   const { id } = useParams();
