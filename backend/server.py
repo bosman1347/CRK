@@ -62,6 +62,7 @@ class TournamentCreate(BaseModel):
     scoring_type: str = "skins"  # "skins" or "standard"
     player_format: Optional[str] = "pairs"  # "singles", "pairs", "trips", "fours"
     num_ends: Optional[int] = 15  # For standard scoring
+    num_rounds: Optional[int] = 7  # Number of rounds in tournament
     draw_type_round2: Optional[str] = "strength"  # "random" or "strength"
 
 class Tournament(BaseModel):
@@ -77,6 +78,7 @@ class Tournament(BaseModel):
     scoring_type: str = "skins"
     player_format: str = "pairs"
     num_ends: int = 15
+    num_rounds: int = 7
     draw_type_round2: str = "strength"
 
 class Team(BaseModel):
