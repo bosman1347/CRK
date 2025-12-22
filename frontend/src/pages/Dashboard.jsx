@@ -53,17 +53,21 @@ const Dashboard = () => {
       <div className="gradient-hero text-white py-12">
         <div className="container mx-auto px-6">
           <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-heading mb-2" data-testid="dashboard-title">Tournament Dashboard</h1>
-              <p className="text-lg text-emerald-100">Welcome back, {user?.name}</p>
-              <Button
-                onClick={() => navigate('/umpire')}
-                variant="outline"
-                className="mt-3 bg-white/10 text-white border-white/30 hover:bg-white/20"
-                data-testid="umpire-dashboard-button"
-              >
-                Manage Tournaments
-              </Button>
+            <div className="flex items-center gap-4">
+              <img src={CLUB_LOGO} alt="Centurion Lawn Bowls Club" className="w-20 h-20 object-contain bg-white/10 rounded-lg p-1" />
+              <div>
+                <h1 className="text-3xl md:text-4xl font-heading mb-1" data-testid="dashboard-title">Centurion Lawn Bowls Club</h1>
+                <p className="text-sm text-emerald-200">Centurion Rolbalklub</p>
+                <p className="text-lg text-emerald-100 mt-1">Welcome back, {user?.name}</p>
+                <Button
+                  onClick={() => navigate('/umpire')}
+                  variant="outline"
+                  className="mt-3 bg-white/10 text-white border-white/30 hover:bg-white/20"
+                  data-testid="umpire-dashboard-button"
+                >
+                  Manage Tournaments
+                </Button>
+              </div>
             </div>
             <div className="flex gap-3">
               <Button
