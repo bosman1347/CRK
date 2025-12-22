@@ -17,6 +17,15 @@ const CreateTournament = () => {
   const [umpireEmail, setUmpireEmail] = useState('');
   const [teams, setTeams] = useState(['', '']);
   const [loading, setLoading] = useState(false);
+  
+  // New fields for scoring type
+  const [scoringType, setScoringType] = useState('skins'); // 'skins' or 'standard'
+  const [playerFormat, setPlayerFormat] = useState('pairs');
+  const [numEnds, setNumEnds] = useState(15);
+  const [numRounds, setNumRounds] = useState(7);
+  const [drawTypeRound2, setDrawTypeRound2] = useState('strength');
+  const [pointSystem, setPointSystem] = useState('shots'); // 'shots' or 'wdl' (win/draw/loss)
+  
   const { getAuthHeader } = useAuth();
   const navigate = useNavigate();
 
