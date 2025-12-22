@@ -281,15 +281,15 @@ const RoundScoreEntry = () => {
       </div>
 
       {/* Score Entry Dialog - Standard Scoring */}
-      {selectedMatch && !selectedMatch.verified && isStandardScoring && (
-        <Dialog open={!!selectedMatch} onOpenChange={() => setSelectedMatch(null)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-heading">Enter Final Scores</DialogTitle>
-              <DialogDescription>
-                Green {selectedMatch.green}, Rink {selectedMatch.rink}
-              </DialogDescription>
-            </DialogHeader>
+      <Dialog open={!!selectedMatch && !selectedMatch?.verified && isStandardScoring} onOpenChange={(open) => !open && setSelectedMatch(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-heading">Enter Final Scores</DialogTitle>
+            <DialogDescription>
+              {selectedMatch && `Green ${selectedMatch.green}, Rink ${selectedMatch.rink}`}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedMatch && (
             <div className="space-y-6 py-4">
               <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-xs text-blue-800">
@@ -340,35 +340,35 @@ const RoundScoreEntry = () => {
                   />
                 </div>
               </div>
+              
+              <div className="flex gap-3 pt-2 border-t">
+                <Button variant="outline" onClick={() => setSelectedMatch(null)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={submitStandardScores}
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                  data-testid="submit-standard-scores"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Submit
+                </Button>
+              </div>
             </div>
-            
-            <div className="flex gap-3 pt-2 border-t">
-              <Button variant="outline" onClick={() => setSelectedMatch(null)} className="flex-1">
-                Cancel
-              </Button>
-              <Button
-                onClick={submitStandardScores}
-                className="flex-1 bg-primary hover:bg-primary/90"
-                data-testid="submit-standard-scores"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Submit
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Score Entry Dialog - Skins Scoring */}
-      {selectedMatch && !selectedMatch.verified && !isStandardScoring && (
-        <Dialog open={!!selectedMatch} onOpenChange={() => setSelectedMatch(null)}>
-          <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-heading">Enter Match Scores</DialogTitle>
-              <DialogDescription>
-                {selectedMatch.team1_name} vs {selectedMatch.team2_name} (Green {selectedMatch.green}, Rink {selectedMatch.rink})
-              </DialogDescription>
-            </DialogHeader>
+      <Dialog open={!!selectedMatch && !selectedMatch?.verified && !isStandardScoring} onOpenChange={(open) => !open && setSelectedMatch(null)}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-heading">Enter Match Scores</DialogTitle>
+            <DialogDescription>
+              {selectedMatch && `${selectedMatch.team1_name} vs ${selectedMatch.team2_name} (Green ${selectedMatch.green}, Rink ${selectedMatch.rink})`}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedMatch && (
             <div className="space-y-4 py-4 overflow-y-auto flex-1">
               <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-xs text-blue-800">Enter shot totals for both teams after each 5-end skin.</p>
@@ -440,16 +440,16 @@ const RoundScoreEntry = () => {
                   );
                 })}
               </div>
+              
+              <div className="pt-2 border-t">
+                <Button variant="outline" onClick={() => setSelectedMatch(null)} className="w-full">
+                  Close
+                </Button>
+              </div>
             </div>
-            
-            <div className="pt-2 border-t">
-              <Button variant="outline" onClick={() => setSelectedMatch(null)} className="w-full">
-                Close
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
