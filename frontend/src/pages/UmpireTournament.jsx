@@ -222,14 +222,15 @@ const UmpireTournament = () => {
             margin-bottom: 10px;
           }
           .club-name {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             color: #1a1a1a;
             margin-bottom: 4px;
           }
           .club-name-alt {
-            font-size: 14px;
-            color: #666;
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a1a1a;
             margin-bottom: 20px;
           }
           h1 { 
