@@ -97,9 +97,9 @@ const PublicStandings = () => {
         <div className="container mx-auto px-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <img src={CLUB_LOGO} alt="Centurion Lawn Bowls Club" className="w-16 h-16 object-contain bg-white/10 rounded-lg p-1" />
+              <img src={CLUB_LOGO} alt="Centurion Bowls Club" className="w-16 h-16 object-contain bg-white/10 rounded-lg p-1" />
               <div>
-                <p className="text-sm text-emerald-200">Centurion Lawn Bowls Club • Centurion Rolbalklub</p>
+                <p className="text-sm text-emerald-200">Centurion Bowls Club • Centurion Rolbalklub</p>
                 <h1 className="text-3xl md:text-4xl font-heading mb-1" data-testid="standings-title">
                   {tournament?.name || 'Tournament'} Standings
                 </h1>
@@ -175,7 +175,7 @@ const PublicStandings = () => {
           {/* Print Header */}
           <div className="print-only text-center mb-8">
             <img src={CLUB_LOGO} alt="Club Logo" style={{ width: '60px', height: '60px', margin: '0 auto 10px' }} />
-            <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>Centurion Lawn Bowls Club</h1>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>Centurion Bowls Club</h1>
             <p style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>Centurion Rolbalklub</p>
             <h2 style={{ fontSize: '20px', marginBottom: '8px' }}>{tournament?.name} - Standings</h2>
             <p style={{ fontSize: '14px', color: '#666' }}>

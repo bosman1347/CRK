@@ -266,7 +266,7 @@ const UmpireTournament = () => {
       <body>
         <div class="container">
           <img src="${CLUB_LOGO}" alt="Club Logo" class="logo" />
-          <p class="club-name">Centurion Lawn Bowls Club</p>
+          <p class="club-name">Centurion Bowls Club</p>
           <p class="club-name-alt">Centurion Rolbalklub</p>
           <h1>${tournament.name}</h1>
           <h2>Round ${tournament.current_round} of ${tournament.num_rounds || 7}</h2>

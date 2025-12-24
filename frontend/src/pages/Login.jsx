@@ -36,10 +36,10 @@ const Login = () => {
       <Card className="w-full max-w-md glass-card border-stone-200" data-testid="login-card">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center">
-            <img src={CLUB_LOGO} alt="Centurion Lawn Bowls Club" className="w-24 h-24 object-contain" />
+            <img src={CLUB_LOGO} alt="Centurion Bowls Club" className="w-24 h-24 object-contain" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-heading">Centurion Lawn Bowls Club</CardTitle>
+            <CardTitle className="text-2xl font-heading">Centurion Bowls Club</CardTitle>
             <p className="text-sm text-muted-foreground">Centurion Rolbalklub</p>
           </div>
           <CardDescription className="text-base">Sign in to manage your tournaments</CardDescription>

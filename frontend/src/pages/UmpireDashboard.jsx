@@ -57,10 +57,10 @@ const UmpireDashboard = () => {
             Back to Main Dashboard
           </Button>
           <div className="flex items-center gap-4">
-            <img src={CLUB_LOGO} alt="Centurion Lawn Bowls Club" className="w-16 h-16 object-contain bg-white/10 rounded-lg p-1" />
+            <img src={CLUB_LOGO} alt="Centurion Bowls Club" className="w-16 h-16 object-contain bg-white/10 rounded-lg p-1" />
             <div>
               <h1 className="text-3xl md:text-4xl font-heading" data-testid="umpire-dashboard-title">Tournament Management</h1>
-              <p className="text-sm text-emerald-200">Centurion Lawn Bowls Club • Centurion Rolbalklub</p>
+              <p className="text-sm text-emerald-200">Centurion Bowls Club • Centurion Rolbalklub</p>
             </div>
           </div>
         </div>

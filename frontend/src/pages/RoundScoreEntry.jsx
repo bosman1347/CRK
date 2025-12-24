@@ -190,9 +190,9 @@ const RoundScoreEntry = () => {
       <div className="gradient-hero text-white py-12">
         <div className="container mx-auto px-6">
           <div className="flex items-center gap-4 mb-4">
-            <img src={CLUB_LOGO} alt="Centurion Lawn Bowls Club" className="w-16 h-16 object-contain bg-white/10 rounded-lg p-1" />
+            <img src={CLUB_LOGO} alt="Centurion Bowls Club" className="w-16 h-16 object-contain bg-white/10 rounded-lg p-1" />
             <div>
-              <p className="text-sm text-emerald-200">Centurion Lawn Bowls Club</p>
+              <p className="text-sm text-emerald-200">Centurion Bowls Club</p>
               <h1 className="text-3xl md:text-4xl font-heading" data-testid="round-title">Round {roundData.round_number} Score Entry</h1>
             </div>
           </div>
