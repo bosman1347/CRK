@@ -476,16 +476,8 @@ const RoundScoreEntry = () => {
                           className="flex-1"
                           data-testid={`skin${skinNum}-team1-input`}
                         />
-                        <Button
-                          onClick={() => submitScore(skinNum, 1)}
-                          className="bg-primary hover:bg-primary/90"
-                          data-testid={`submit-skin${skinNum}-team1`}
-                          size="sm"
-                        >
-                          <Save className="w-4 h-4" />
-                        </Button>
                         {team1Score !== null && (
-                          <Badge className="bg-green-100 text-green-700 text-xs">{team1Score}</Badge>
+                          <Badge className="bg-green-100 text-green-700 text-xs">Saved: {team1Score}</Badge>
                         )}
                       </div>
 
@@ -501,26 +493,33 @@ const RoundScoreEntry = () => {
                           className="flex-1"
                           data-testid={`skin${skinNum}-team2-input`}
                         />
-                        <Button
-                          onClick={() => submitScore(skinNum, 2)}
-                          className="bg-primary hover:bg-primary/90"
-                          data-testid={`submit-skin${skinNum}-team2`}
-                          size="sm"
-                        >
-                          <Save className="w-4 h-4" />
-                        </Button>
                         {team2Score !== null && (
-                          <Badge className="bg-green-100 text-green-700 text-xs">{team2Score}</Badge>
+                          <Badge className="bg-green-100 text-green-700 text-xs">Saved: {team2Score}</Badge>
                         )}
                       </div>
                     </div>
                   );
                 })}
               </div>
+
+              {/* Warning Message */}
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <p className="text-sm text-amber-900 font-medium">
+                  ⚠️ Please ensure scores are correct, else the organizers will have to rectify mistakes.
+                </p>
+              </div>
               
-              <div className="pt-2 border-t">
-                <Button variant="outline" onClick={() => setSelectedMatch(null)} className="w-full">
-                  Close
+              <div className="flex gap-3 pt-2 border-t">
+                <Button variant="outline" onClick={() => setSelectedMatch(null)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={submitAllSkinsScores}
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                  data-testid="submit-all-skins"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save All Scores
                 </Button>
               </div>
             </div>
