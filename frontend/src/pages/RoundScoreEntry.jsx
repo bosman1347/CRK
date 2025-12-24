@@ -410,6 +410,13 @@ const RoundScoreEntry = () => {
                   />
                 </div>
               </div>
+
+              {/* Warning Message */}
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <p className="text-sm text-amber-900 font-medium">
+                  ⚠️ Please ensure scores are correct, else the organizers will have to rectify mistakes.
+                </p>
+              </div>
               
               <div className="flex gap-3 pt-2 border-t">
                 <Button variant="outline" onClick={() => setSelectedMatch(null)} className="flex-1">
