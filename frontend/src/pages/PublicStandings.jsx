@@ -175,9 +175,9 @@ const PublicStandings = () => {
           {/* Print Header */}
           <div className="print-only text-center mb-8">
             <img src={CLUB_LOGO} alt="Club Logo" style={{ width: '60px', height: '60px', margin: '0 auto 10px' }} />
-            <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>Centurion Bowls Club</h1>
-            <p style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>Centurion Rolbalklub</p>
-            <h2 style={{ fontSize: '20px', marginBottom: '8px' }}>{tournament?.name} - Standings</h2>
+            <h1 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '4px' }}>Centurion Bowls Club</h1>
+            <p style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px' }}>Centurion Rolbalklub</p>
+            <h2 style={{ fontSize: '18px', marginBottom: '8px' }}>{tournament?.name} - Standings</h2>
             <p style={{ fontSize: '14px', color: '#666' }}>
               Round {tournament?.current_round} of {tournament?.num_rounds || 7} • {isStandardScoring ? 'Standard' : 'Skins'} Scoring
             </p>
