@@ -192,11 +192,11 @@ const RoundScoreEntry = () => {
           <div className="flex items-center gap-4 mb-4">
             <img src={CLUB_LOGO} alt="Centurion Bowls Club" className="w-16 h-16 object-contain bg-white/10 rounded-lg p-1" />
             <div>
-              <p className="text-sm text-emerald-200">Centurion Bowls Club</p>
-              <h1 className="text-3xl md:text-4xl font-heading" data-testid="round-title">Round {roundData.round_number} Score Entry</h1>
+              <p className="text-base text-emerald-200">Centurion Bowls Club • Centurion Rolbalklub</p>
+              <h1 className="text-2xl md:text-3xl font-heading" data-testid="round-title">Round {roundData.round_number} Score Entry</h1>
             </div>
           </div>
-          <p className="text-lg text-emerald-100">
+          <p className="text-base text-emerald-100">
             {isStandardScoring ? 'Enter final shot totals' : 'Enter scores for each skin'}
           </p>
           <div className="flex items-center gap-3 mt-3">
