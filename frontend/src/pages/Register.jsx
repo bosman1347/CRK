@@ -40,8 +40,8 @@ const Register = () => {
             <img src={CLUB_LOGO} alt="Centurion Bowls Club" className="w-24 h-24 object-contain" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-heading">Centurion Bowls Club</CardTitle>
-            <p className="text-sm text-muted-foreground">Centurion Rolbalklub</p>
+            <CardTitle className="text-xl font-heading">Centurion Bowls Club</CardTitle>
+            <p className="text-xl font-heading text-muted-foreground">Centurion Rolbalklub</p>
           </div>
           <CardDescription className="text-base">Create your account</CardDescription>
         </CardHeader>
