@@ -56,9 +56,9 @@ const Dashboard = () => {
             <div className="flex items-center gap-4">
               <img src={CLUB_LOGO} alt="Centurion Bowls Club" className="w-20 h-20 object-contain bg-white/10 rounded-lg p-1" />
               <div>
-                <h1 className="text-3xl md:text-4xl font-heading mb-1" data-testid="dashboard-title">Centurion Bowls Club</h1>
-                <p className="text-sm text-emerald-200">Centurion Rolbalklub</p>
-                <p className="text-lg text-emerald-100 mt-1">Welcome back, {user?.name}</p>
+                <h1 className="text-2xl md:text-3xl font-heading" data-testid="dashboard-title">Centurion Bowls Club</h1>
+                <p className="text-2xl md:text-3xl font-heading text-emerald-200">Centurion Rolbalklub</p>
+                <p className="text-base text-emerald-100 mt-2">Welcome back, {user?.name}</p>
                 <Button
                   onClick={() => navigate('/umpire')}
                   variant="outline"
