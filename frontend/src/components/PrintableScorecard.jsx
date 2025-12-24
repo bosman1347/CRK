@@ -72,10 +72,10 @@ const PrintableScorecard = ({ round, matches, qrUrl, tournamentName, scoringType
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '5px' }}>
                   <img src={CLUB_LOGO} alt="Club Logo" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
                   <div>
-                    <h1 style={{ fontSize: '14px', fontWeight: 'bold', margin: '0', fontFamily: 'serif' }}>
+                    <h1 style={{ fontSize: '13px', fontWeight: 'bold', margin: '0', fontFamily: 'serif' }}>
                       Centurion Bowls Club
                     </h1>
-                    <p style={{ fontSize: '10px', margin: '0', color: '#666' }}>Centurion Rolbalklub</p>
+                    <p style={{ fontSize: '13px', fontWeight: 'bold', margin: '0', fontFamily: 'serif' }}>Centurion Rolbalklub</p>
                   </div>
                 </div>
                 <p style={{ fontSize: '13px', margin: '0', fontWeight: '600' }}>
