@@ -80,6 +80,59 @@ const RoundScoreEntry = () => {
       toast.error(error.response?.data?.detail || 'Failed to submit score');
     }
   };
+
+  const submitAllSkinsScores = async () => {
+    if (!selectedMatch) {
+      toast.error('Please select your match first');
+      return;
+    }
+
+    // Validate all scores are entered
+    const allScores = [
+      { skin: 1, team: 1, value: scores.skin1_team1 },
+      { skin: 1, team: 2, value: scores.skin1_team2 },
+      { skin: 2, team: 1, value: scores.skin2_team1 },
+      { skin: 2, team: 2, value: scores.skin2_team2 },
+      { skin: 3, team: 1, value: scores.skin3_team1 },
+      { skin: 3, team: 2, value: scores.skin3_team2 },
+    ];
+
+    const emptyScores = allScores.filter(s => s.value === '' || s.value === null || s.value === undefined);
+    if (emptyScores.length > 0) {
+      toast.error('Please enter all scores before saving');
+      return;
+    }
+
+    const invalidScores = allScores.filter(s => isNaN(parseInt(s.value)) || parseInt(s.value) < 0);
+    if (invalidScores.length > 0) {
+      toast.error('All scores must be valid numbers (0 or greater)');
+      return;
+    }
+
+    try {
+      // Submit all scores
+      for (const score of allScores) {
+        await axios.post(`${API}/rounds/by-token/${token}/matches/${selectedMatch.id}/scores`, {
+          team_number: score.team,
+          skin_number: score.skin,
+          shots: parseInt(score.value)
+        });
+      }
+      toast.success('All scores saved successfully!');
+      setSelectedMatch(null);
+      setScores({
+        skin1_team1: '',
+        skin1_team2: '',
+        skin2_team1: '',
+        skin2_team2: '',
+        skin3_team1: '',
+        skin3_team2: ''
+      });
+      fetchRound();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to submit scores');
+    }
+  };
   
   const submitStandardScores = async () => {
     if (!selectedMatch) {
