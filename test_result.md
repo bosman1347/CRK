@@ -228,3 +228,32 @@ agent_communication:
       2. Player score entry page for standard scoring
       3. Umpire verification dialog for standard scoring
       4. All users can access 'Manage Tournaments' page
+  - agent: "main"
+    message: |
+      Implemented Club Championship feature (Phase 1 & 2 complete):
+      
+      BACKEND:
+      - Championship CRUD endpoints
+      - CSV upload for sections/participants
+      - Round-robin match generation with auto-schedule
+      - Knockout bracket generation from section winners
+      - Manual knockout entry for knockout-only championships
+      - Score entry via access tokens
+      - Match verification with proper standings calculation
+      - Public standings and bracket endpoints
+      
+      FRONTEND:
+      - CreateChampionship.jsx - Full creation form with all options
+      - ChampionshipManage.jsx - Management page with tabs (Matches/Standings/Bracket)
+      - ChampionshipScoreEntry.jsx - Player score entry via QR code
+      - PublicChampionshipStandings.jsx - Public standings with bracket
+      - KnockoutBracket.jsx - Visual bracket component
+      - Updated Dashboard to show championships
+      - Added all routes to App.js
+      
+      Need testing for:
+      1. Create championship flow (round robin and knockout-only)
+      2. CSV upload and round-robin generation
+      3. Score entry and verification
+      4. Knockout bracket progression
+      5. Public standings page
