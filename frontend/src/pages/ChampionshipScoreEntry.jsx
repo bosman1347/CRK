@@ -89,7 +89,12 @@ const ChampionshipScoreEntry = () => {
     return matches.filter(m => m.section_id === sectionId);
   };
 
+  const roundRobinMatches = matches.filter(m => m.stage === 'round_robin');
   const knockoutMatches = matches.filter(m => m.stage !== 'round_robin');
+  
+  // Determine what to show based on matches returned (not championship stage)
+  const hasRoundRobinMatches = roundRobinMatches.length > 0;
+  const hasKnockoutMatches = knockoutMatches.length > 0;
 
   if (loading) {
     return (
