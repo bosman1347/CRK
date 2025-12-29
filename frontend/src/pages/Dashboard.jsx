@@ -44,6 +44,28 @@ const Dashboard = () => {
     navigate('/login');
   };
 
+  const openDeleteDialog = (type, item, e) => {
+    e.stopPropagation(); // Prevent card click navigation
+    setDeleteDialog({ open: true, type, item });
+  };
+
+  const handleDelete = async () => {
+    const { type, item } = deleteDialog;
+    try {
+      if (type === 'tournament') {
+        await axios.delete(`${API}/tournaments/${item.id}`, { headers: getAuthHeader() });
+        toast.success('Tournament deleted');
+      } else {
+        await axios.delete(`${API}/championships/${item.id}`, { headers: getAuthHeader() });
+        toast.success('Championship deleted');
+      }
+      setDeleteDialog({ open: false, type: null, item: null });
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to delete');
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = {
       setup: 'bg-blue-100 text-blue-700',
