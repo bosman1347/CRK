@@ -322,6 +322,15 @@ const ChampionshipManage = () => {
                   <Printer className="w-4 h-4 mr-2" /> Print QR Code
                 </Button>
               )}
+              {championship.current_stage === 'final' && allCurrentStageVerified && (
+                <Button 
+                  onClick={() => setShowArchiveDialog(true)} 
+                  variant="outline" 
+                  className="bg-amber-700/30 text-white border-amber-300/50 hover:bg-amber-700/50"
+                >
+                  <Archive className="w-4 h-4 mr-2" /> Archive Championship
+                </Button>
+              )}
             </div>
           </div>
         </div>
