@@ -301,14 +301,26 @@ const Dashboard = () => {
                         <Calendar className="w-4 h-4" />
                         <span className="stats-number">Round {tournament.current_round}/{tournament.num_rounds || 7}</span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={(e) => openDeleteDialog('tournament', tournament, e)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                          onClick={(e) => openArchiveDialog('tournament', tournament, e)}
+                          title="Archive (keep results)"
+                        >
+                          <Archive className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={(e) => openDeleteDialog('tournament', tournament, e)}
+                          title="Delete permanently"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
