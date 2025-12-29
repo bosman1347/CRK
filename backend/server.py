@@ -1149,7 +1149,17 @@ async def upload_participants(championship_id: str, file: UploadFile = File(...)
         if text_content is None:
             raise HTTPException(status_code=400, detail="Unable to read file. Please save as CSV (UTF-8) format.")
         
-        reader = csv.DictReader(io.StringIO(text_content))
+        # Log first 500 chars of file for debugging
+        logging.info(f"File content preview: {text_content[:500]}")
+        
+        # Detect delimiter - Excel in some regions uses semicolon
+        delimiter = ','
+        first_line = text_content.split('\n')[0] if '\n' in text_content else text_content.split('\r')[0]
+        if ';' in first_line and ',' not in first_line:
+            delimiter = ';'
+            logging.info(f"Detected semicolon delimiter")
+        
+        reader = csv.DictReader(io.StringIO(text_content), delimiter=delimiter)
         
         # Normalize column names
         rows = []
@@ -1158,8 +1168,9 @@ async def upload_participants(championship_id: str, file: UploadFile = File(...)
             for key, value in row.items():
                 if key is None:
                     continue
-                normalized_key = key.strip().lower()
-                normalized_row[normalized_key] = value.strip() if value else ""
+                # Remove BOM, quotes, and whitespace from key
+                cleaned_key = key.strip().lower().replace('"', '').replace('\ufeff', '')
+                normalized_row[cleaned_key] = value.strip() if value else ""
             rows.append(normalized_row)
         
         if not rows:
@@ -1169,8 +1180,23 @@ async def upload_participants(championship_id: str, file: UploadFile = File(...)
         first_row_keys = list(rows[0].keys())
         logging.info(f"CSV columns found: {first_row_keys}")
         
-        if 'section' not in first_row_keys or 'name' not in first_row_keys:
-            raise HTTPException(status_code=400, detail=f"CSV must have 'Section' and 'Name' columns. Found columns: {first_row_keys}")
+        # More flexible column matching
+        section_col = None
+        name_col = None
+        for key in first_row_keys:
+            if 'section' in key.lower():
+                section_col = key
+            if 'name' in key.lower():
+                name_col = key
+        
+        if not section_col or not name_col:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"CSV must have 'Section' and 'Name' columns. Found columns: {first_row_keys}. First row data: {rows[0] if rows else 'empty'}"
+            )
+        
+        # Use the found column names
+        logging.info(f"Using section column: '{section_col}', name column: '{name_col}'")
         
     except UnicodeDecodeError:
         raise HTTPException(status_code=400, detail="Invalid file format. Please save as CSV (UTF-8) format from Excel.")
@@ -1182,8 +1208,8 @@ async def upload_participants(championship_id: str, file: UploadFile = File(...)
     # Group by section
     sections_data = {}
     for row in rows:
-        section_name = row.get('section', '').upper()
-        participant_name = row.get('name', '')
+        section_name = row.get(section_col, '').upper().strip()
+        participant_name = row.get(name_col, '').strip()
         
         if not section_name or not participant_name:
             continue
