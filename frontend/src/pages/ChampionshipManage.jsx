@@ -69,6 +69,9 @@ const ChampionshipManage = () => {
     const file = e.target.files[0];
     if (!file) return;
     
+    // Show loading message
+    toast.info(`Uploading ${file.name}...`);
+    
     const formData = new FormData();
     formData.append('file', file);
     
@@ -81,8 +84,12 @@ const ChampionshipManage = () => {
       toast.success(response.data.message);
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to upload participants');
+      console.error('Upload error:', error);
+      toast.error(error.response?.data?.detail || 'Failed to upload participants. Please check your CSV format.');
     }
+    
+    // Reset file input so the same file can be selected again if needed
+    e.target.value = '';
   };
 
   const generateRoundRobin = async () => {
