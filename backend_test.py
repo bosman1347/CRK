@@ -83,17 +83,15 @@ class LawnBowlsAPITester:
             return True
         return False
 
-    def test_user_login(self):
-        """Test user login with existing credentials"""
-        # Use the same credentials from registration
-        timestamp = datetime.now().strftime('%H%M%S')
+    def test_user_login_championship(self):
+        """Test user login with championship test credentials"""
         login_data = {
-            "email": f"testuser{timestamp}@example.com",
-            "password": "TestPass123!"
+            "email": "test_champ@example.com",
+            "password": "testpass123"
         }
         
         success, response = self.run_test(
-            "User Login",
+            "Championship User Login",
             "POST", 
             "auth/login",
             200,
@@ -104,6 +102,26 @@ class LawnBowlsAPITester:
             self.token = response['access_token']
             self.user_id = response['user']['id']
             return True
+        else:
+            # If login fails, register the user
+            register_data = {
+                "email": "test_champ@example.com",
+                "password": "testpass123",
+                "name": "Championship Test User"
+            }
+            
+            success, response = self.run_test(
+                "Championship User Registration",
+                "POST",
+                "auth/register",
+                200,
+                data=register_data
+            )
+            
+            if success and 'access_token' in response:
+                self.token = response['access_token']
+                self.user_id = response['user']['id']
+                return True
         return False
 
     def test_create_tournament_4_teams(self):
