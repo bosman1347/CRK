@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { toast } from 'sonner';
-import { Plus, Trophy, LogOut, Calendar, Users, Settings, Crown, Archive } from 'lucide-react';
+import { Plus, Trophy, LogOut, Calendar, Users, Settings, Crown, Archive, Trash2 } from 'lucide-react';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -15,6 +16,7 @@ const Dashboard = () => {
   const [tournaments, setTournaments] = useState([]);
   const [championships, setChampionships] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, type: null, item: null });
   const { user, logout, getAuthHeader } = useAuth();
   const navigate = useNavigate();
 
