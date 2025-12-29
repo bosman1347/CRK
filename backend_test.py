@@ -531,6 +531,438 @@ class LawnBowlsAPITester:
         
         return success and success2
 
+    # ==================== CHAMPIONSHIP TESTS ====================
+    
+    def test_create_round_robin_championship(self):
+        """Test creating a round robin championship"""
+        championship_data = {
+            "name": "Test Men's Singles Championship",
+            "competition_type": "singles",
+            "gender_category": "mens",
+            "age_category": "open",
+            "start_type": "round_robin",
+            "ends_per_match": 15,
+            "finals_ends": 21
+        }
+        
+        success, response = self.run_test(
+            "Create Round Robin Championship",
+            "POST",
+            "championships",
+            200,
+            data=championship_data
+        )
+        
+        if success and 'championship' in response:
+            self.championship_id = response['championship']['id']
+            print(f"   Championship ID: {self.championship_id}")
+            print(f"   Status: {response['championship']['status']}")
+            return response['championship']['status'] == 'setup'
+        return False
+
+    def test_create_knockout_championship(self):
+        """Test creating a knockout-only championship"""
+        championship_data = {
+            "name": "Test Knockout Championship",
+            "competition_type": "pairs",
+            "gender_category": "mixed",
+            "age_category": "open",
+            "start_type": "knockout",
+            "ends_per_match": 18,
+            "finals_ends": 21
+        }
+        
+        success, response = self.run_test(
+            "Create Knockout Championship",
+            "POST",
+            "championships",
+            200,
+            data=championship_data
+        )
+        
+        if success and 'championship' in response:
+            print(f"   Knockout Championship ID: {response['championship']['id']}")
+            return response['championship']['status'] == 'setup'
+        return False
+
+    def test_get_championships(self):
+        """Test getting user's championships"""
+        success, response = self.run_test(
+            "Get Championships",
+            "GET",
+            "championships",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} championships")
+            return True
+        return False
+
+    def test_upload_participants_csv(self):
+        """Test uploading participants via CSV"""
+        if not self.championship_id:
+            print("❌ No championship ID available")
+            return False
+        
+        # Create CSV content
+        csv_content = """Section,Name
+A,Player 1
+A,Player 2
+A,Player 3
+B,Player 4
+B,Player 5
+B,Player 6"""
+        
+        # Use requests to upload file
+        url = f"{self.api_url}/championships/{self.championship_id}/upload-participants"
+        headers = {'Authorization': f'Bearer {self.token}'}
+        files = {'file': ('participants.csv', csv_content, 'text/csv')}
+        
+        self.tests_run += 1
+        print(f"\n🔍 Testing Upload Participants CSV...")
+        
+        try:
+            response = requests.post(url, headers=headers, files=files)
+            success = response.status_code == 200
+            
+            if success:
+                self.tests_passed += 1
+                print(f"✅ Passed - Status: {response.status_code}")
+                data = response.json()
+                print(f"   Uploaded {data.get('participant_count', 0)} participants")
+                print(f"   Created {len(data.get('sections', []))} sections")
+                return True
+            else:
+                print(f"❌ Failed - Expected 200, got {response.status_code}")
+                try:
+                    print(f"   Response: {response.json()}")
+                except:
+                    print(f"   Response: {response.text}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False
+
+    def test_get_championship_sections(self):
+        """Test getting championship sections"""
+        if not self.championship_id:
+            print("❌ No championship ID available")
+            return False
+            
+        success, response = self.run_test(
+            "Get Championship Sections",
+            "GET",
+            f"championships/{self.championship_id}/sections",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            self.section_ids = [section['id'] for section in response]
+            print(f"   Found {len(response)} sections")
+            for section in response:
+                print(f"     - Section {section['name']}: {section['status']}")
+            return True
+        return False
+
+    def test_get_championship_participants(self):
+        """Test getting championship participants"""
+        if not self.championship_id:
+            print("❌ No championship ID available")
+            return False
+            
+        success, response = self.run_test(
+            "Get Championship Participants",
+            "GET",
+            f"championships/{self.championship_id}/participants",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} participants")
+            for participant in response:
+                print(f"     - {participant['name']}: {participant['points']} points")
+            return True
+        return False
+
+    def test_generate_round_robin_matches(self):
+        """Test generating round robin matches"""
+        if not self.championship_id:
+            print("❌ No championship ID available")
+            return False
+            
+        success, response = self.run_test(
+            "Generate Round Robin Matches",
+            "POST",
+            f"championships/{self.championship_id}/generate-round-robin",
+            200
+        )
+        
+        if success and 'access_token' in response:
+            self.championship_access_token = response['access_token']
+            print(f"   Generated {response.get('total_matches', 0)} matches")
+            print(f"   Access token: {self.championship_access_token[:20]}...")
+            return True
+        return False
+
+    def test_get_championship_matches(self):
+        """Test getting championship matches"""
+        if not self.championship_id:
+            print("❌ No championship ID available")
+            return False
+            
+        success, response = self.run_test(
+            "Get Championship Matches",
+            "GET",
+            f"championships/{self.championship_id}/matches",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            self.championship_match_ids = [match['id'] for match in response]
+            print(f"   Found {len(response)} matches")
+            for match in response:
+                print(f"     - {match['participant1_name']} vs {match['participant2_name']} (Green {match.get('green')}, Rink {match.get('rink')})")
+            return True
+        return False
+
+    def test_get_championship_round_by_token(self):
+        """Test getting championship round by access token (player view)"""
+        if not self.championship_access_token:
+            print("❌ No championship access token available")
+            return False
+            
+        success, response = self.run_test(
+            "Get Championship Round by Token",
+            "GET",
+            f"championship-round/{self.championship_access_token}",
+            200
+        )
+        
+        if success and 'championship' in response and 'matches' in response:
+            print(f"   Championship: {response['championship']['name']}")
+            print(f"   Matches available: {len(response['matches'])}")
+            return True
+        return False
+
+    def test_submit_championship_match_scores(self):
+        """Test submitting championship match scores"""
+        if not self.championship_access_token or not self.championship_match_ids:
+            print("❌ No championship access token or match IDs available")
+            return False
+            
+        match_id = self.championship_match_ids[0]
+        score_data = {
+            "participant1_shots": 15,
+            "participant2_shots": 12
+        }
+        
+        success, response = self.run_test(
+            "Submit Championship Match Scores",
+            "POST",
+            f"championship-round/{self.championship_access_token}/match/{match_id}/scores",
+            200,
+            data=score_data
+        )
+        
+        if success:
+            print(f"   Scores submitted: P1={score_data['participant1_shots']}, P2={score_data['participant2_shots']}")
+            return True
+        return False
+
+    def test_verify_championship_match(self):
+        """Test verifying championship match"""
+        if not self.championship_id or not self.championship_match_ids:
+            print("❌ No championship ID or match IDs available")
+            return False
+            
+        match_id = self.championship_match_ids[0]
+        verification_data = {
+            "participant1_shots": 15,
+            "participant2_shots": 12
+        }
+        
+        success, response = self.run_test(
+            "Verify Championship Match",
+            "POST",
+            f"championships/{self.championship_id}/matches/{match_id}/verify",
+            200,
+            data=verification_data
+        )
+        
+        if success and 'winner_id' in response:
+            print(f"   Match verified, winner: {response['winner_id']}")
+            print(f"   Is draw: {response.get('is_draw', False)}")
+            return True
+        return False
+
+    def test_complete_all_round_robin_matches(self):
+        """Test completing all round robin matches"""
+        if not self.championship_id or not self.championship_match_ids:
+            print("❌ No championship ID or match IDs available")
+            return False
+        
+        print(f"\n   Completing {len(self.championship_match_ids)} round robin matches...")
+        
+        for i, match_id in enumerate(self.championship_match_ids):
+            # Vary scores to create realistic results
+            p1_shots = 15 + (i % 3)
+            p2_shots = 12 + (i % 4)
+            
+            verification_data = {
+                "participant1_shots": p1_shots,
+                "participant2_shots": p2_shots
+            }
+            
+            success, response = self.run_test(
+                f"Verify Match {i+1}",
+                "POST",
+                f"championships/{self.championship_id}/matches/{match_id}/verify",
+                200,
+                data=verification_data
+            )
+            
+            if not success:
+                print(f"   ❌ Failed to verify match {i+1}")
+                return False
+        
+        print(f"   ✅ All {len(self.championship_match_ids)} matches completed")
+        return True
+
+    def test_get_section_standings(self):
+        """Test getting section standings"""
+        if not self.championship_id or not self.section_ids:
+            print("❌ No championship ID or section IDs available")
+            return False
+            
+        section_id = self.section_ids[0]
+        success, response = self.run_test(
+            "Get Section Standings",
+            "GET",
+            f"championships/{self.championship_id}/sections/{section_id}/standings",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Section standings ({len(response)} participants):")
+            for i, participant in enumerate(response):
+                print(f"     {i+1}. {participant['name']}: {participant['points']} pts, +{participant['shot_difference']}")
+            return True
+        return False
+
+    def test_generate_knockout_bracket(self):
+        """Test generating knockout bracket from round robin winners"""
+        if not self.championship_id:
+            print("❌ No championship ID available")
+            return False
+            
+        success, response = self.run_test(
+            "Generate Knockout Bracket",
+            "POST",
+            f"championships/{self.championship_id}/generate-knockout",
+            200
+        )
+        
+        if success and 'knockout_participants' in response:
+            print(f"   Knockout bracket created with {response.get('knockout_participants', 0)} participants")
+            print(f"   Matches created: {response.get('matches_created', 0)}")
+            return True
+        return False
+
+    def test_get_public_championship_standings(self):
+        """Test getting public championship standings"""
+        if not self.championship_id:
+            print("❌ No championship ID available")
+            return False
+            
+        success, response = self.run_test(
+            "Get Public Championship Standings",
+            "GET",
+            f"public/championships/{self.championship_id}/standings",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Public standings ({len(response)} participants)")
+            return True
+        return False
+
+    def test_get_public_championship_bracket(self):
+        """Test getting public championship bracket"""
+        if not self.championship_id:
+            print("❌ No championship ID available")
+            return False
+            
+        success, response = self.run_test(
+            "Get Public Championship Bracket",
+            "GET",
+            f"public/championships/{self.championship_id}/bracket",
+            200
+        )
+        
+        if success:
+            print(f"   Public bracket retrieved")
+            return True
+        return False
+
+    def test_championship_flow_complete(self):
+        """Test complete championship flow"""
+        print("\n🏆 Testing Complete Championship Flow...")
+        
+        # Step 1: Create championship
+        if not self.test_create_round_robin_championship():
+            return False
+        
+        # Step 2: Upload participants
+        if not self.test_upload_participants_csv():
+            return False
+        
+        # Step 3: Get sections and participants
+        if not self.test_get_championship_sections():
+            return False
+        if not self.test_get_championship_participants():
+            return False
+        
+        # Step 4: Generate round robin matches
+        if not self.test_generate_round_robin_matches():
+            return False
+        
+        # Step 5: Get matches
+        if not self.test_get_championship_matches():
+            return False
+        
+        # Step 6: Test player access via token
+        if not self.test_get_championship_round_by_token():
+            return False
+        
+        # Step 7: Submit and verify scores
+        if not self.test_submit_championship_match_scores():
+            return False
+        if not self.test_verify_championship_match():
+            return False
+        
+        # Step 8: Complete all matches
+        if not self.test_complete_all_round_robin_matches():
+            return False
+        
+        # Step 9: Check standings
+        if not self.test_get_section_standings():
+            return False
+        
+        # Step 10: Generate knockout bracket
+        if not self.test_generate_knockout_bracket():
+            return False
+        
+        # Step 11: Test public endpoints
+        if not self.test_get_public_championship_standings():
+            return False
+        if not self.test_get_public_championship_bracket():
+            return False
+        
+        print("🎉 Complete championship flow test passed!")
+        return True
+
 def main():
     print("🏆 Starting Lawn Bowls Tournament API Tests")
     print("=" * 50)
