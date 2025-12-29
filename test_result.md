@@ -150,11 +150,122 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Updated all umpire routes to allow tournament creator access"
+      - working: true
+        agent: "testing"
+        comment: "Tested organizer access to umpire routes - working correctly"
+
+  - task: "Championship creation API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/championships - Creates round robin and knockout championships successfully"
+
+  - task: "Championship CSV upload API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/championships/{id}/upload-participants - CSV upload with sections working correctly"
+
+  - task: "Championship round robin generation API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/championships/{id}/generate-round-robin - Generates matches and access tokens correctly"
+
+  - task: "Championship match management APIs"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/championships/{id}/matches and token-based access working correctly"
+
+  - task: "Championship score entry API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/championship-round/{token}/match/{id}/scores - Player score entry working correctly"
+
+  - task: "Championship match verification API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/championships/{id}/matches/{id}/verify - Match verification with standings calculation working"
+
+  - task: "Championship knockout bracket API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/championships/{id}/generate-knockout - Knockout bracket generation from section winners working"
+
+  - task: "Championship public endpoints"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/public/championships/{id}/standings and /bracket - Public endpoints working correctly"
+
+  - task: "Championship sections and participants APIs"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET sections, participants, and standings APIs all working correctly"
 
 frontend:
   - task: "Standard scoring form in CreateTournament"
