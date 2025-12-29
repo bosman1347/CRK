@@ -159,6 +159,90 @@ class Match(BaseModel):
     verified_at: Optional[str] = None
     status: str = "pending"
 
+# ==================== CHAMPIONSHIP MODELS ====================
+
+class ChampionshipCreate(BaseModel):
+    name: str  # e.g., "2026 Men's Singles Championship"
+    competition_type: str  # "singles", "pairs", "triples", "fours"
+    gender_category: str  # "mens", "ladies", "mixed"
+    age_category: Optional[str] = "open"  # "open", "novice", "veterans" (only for singles)
+    start_type: str  # "round_robin" or "knockout"
+    ends_per_match: int = 15  # 15 or 18 (ignored for singles)
+    finals_ends: int = 21  # Can differ from regular matches
+
+class Championship(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    name: str
+    creator_id: str
+    competition_type: str  # "singles", "pairs", "triples", "fours"
+    gender_category: str  # "mens", "ladies", "mixed"
+    age_category: str = "open"  # "open", "novice", "veterans"
+    start_type: str  # "round_robin" or "knockout"
+    ends_per_match: int = 15
+    finals_ends: int = 21
+    status: str  # "setup", "round_robin", "knockout", "completed"
+    current_stage: str  # "setup", "round_robin", "knockout_round_X", "final"
+    created_at: str
+
+class ChampionshipSection(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    championship_id: str
+    name: str  # "A", "B", "C", etc.
+    status: str  # "pending", "in_progress", "completed"
+
+class ChampionshipParticipant(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    championship_id: str
+    section_id: str
+    name: str
+    # Round robin stats
+    matches_played: int = 0
+    wins: int = 0
+    draws: int = 0
+    losses: int = 0
+    points: int = 0  # 2 for win, 1 for draw, 0 for loss
+    shots_for: int = 0
+    shots_against: int = 0
+    shot_difference: int = 0
+    # Knockout tracking
+    eliminated: bool = False
+    knockout_seed: Optional[int] = None
+
+class ChampionshipMatch(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    championship_id: str
+    section_id: Optional[str] = None  # For round robin matches
+    stage: str  # "round_robin", "knockout_round_1", "knockout_quarter", "knockout_semi", "final"
+    bracket_position: Optional[int] = None  # Position in knockout bracket
+    participant1_id: str
+    participant2_id: str
+    participant1_name: str
+    participant2_name: str
+    participant1_shots: Optional[int] = None
+    participant2_shots: Optional[int] = None
+    winner_id: Optional[str] = None
+    is_draw: bool = False
+    green: Optional[str] = None
+    rink: Optional[int] = None
+    scores_entered: bool = False
+    verified: bool = False
+    verified_by: Optional[str] = None
+    verified_at: Optional[str] = None
+    status: str = "pending"  # "pending", "in_progress", "completed"
+    access_token: Optional[str] = None
+
+class ChampionshipMatchScoreEntry(BaseModel):
+    participant1_shots: int
+    participant2_shots: int
+
+class KnockoutBracketEntry(BaseModel):
+    participant1_name: str
+    participant2_name: str
+
 # Helper functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
