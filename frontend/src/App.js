@@ -13,6 +13,11 @@ import UmpireTournament from './pages/UmpireTournament';
 import PublicStandings from './pages/PublicStandings';
 import PublicSummary from './pages/PublicSummary';
 import Settings from './pages/Settings';
+// Championship imports
+import CreateChampionship from './pages/CreateChampionship';
+import ChampionshipManage from './pages/ChampionshipManage';
+import ChampionshipScoreEntry from './pages/ChampionshipScoreEntry';
+import PublicChampionshipStandings from './pages/PublicChampionshipStandings';
 import '@/App.css';
 
 const PrivateRoute = ({ children }) => {
