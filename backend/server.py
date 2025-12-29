@@ -243,6 +243,25 @@ class KnockoutBracketEntry(BaseModel):
     participant1_name: str
     participant2_name: str
 
+# ==================== ARCHIVE MODELS ====================
+
+class ArchivedTournament(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    original_id: str
+    name: str
+    type: str  # "skins", "standard", "championship"
+    competition_type: Optional[str] = None  # For championships: singles, pairs, etc.
+    gender_category: Optional[str] = None
+    winner: str
+    runner_up: str
+    final_score: str  # e.g., "21-15" or "4.5-3.0"
+    participants: List[str]  # List of participant names
+    final_standings: List[dict]  # [{position: 1, name: "...", points: X}, ...]
+    archived_at: str
+    expires_at: str  # Auto-delete after 2 years
+    archived_by: str
+
 # Helper functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
