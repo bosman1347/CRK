@@ -494,16 +494,29 @@ const ChampionshipManage = () => {
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex gap-4 justify-end">
+                <div className="flex flex-col gap-4 items-end mt-6">
                   {championship.status === 'round_robin' && allRoundRobinVerified && (
-                    <Button onClick={generateKnockout} className="bg-amber-500 hover:bg-amber-600">
-                      <ChevronRight className="w-4 h-4 mr-2" /> Generate Knockout Bracket
-                    </Button>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 w-full">
+                      <p className="text-green-800 mb-3">✓ All round-robin matches verified. Ready to generate knockout bracket!</p>
+                      <Button onClick={generateKnockout} className="w-full bg-amber-500 hover:bg-amber-600">
+                        <ChevronRight className="w-4 h-4 mr-2" /> Generate Knockout Bracket
+                      </Button>
+                    </div>
                   )}
-                  {championship.status === 'knockout' && allCurrentStageVerified && championship.current_stage !== 'final' && (
-                    <Button onClick={advanceKnockout} className="bg-amber-500 hover:bg-amber-600">
-                      <ChevronRight className="w-4 h-4 mr-2" /> Advance to Next Round
-                    </Button>
+                  {championship.status === 'knockout' && allCurrentStageVerified && championship.current_stage !== 'final' && championship.current_stage !== 'completed' && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 w-full">
+                      <p className="text-green-800 mb-3">✓ All {championship.current_stage.replace(/_/g, ' ')} matches verified. Ready to advance!</p>
+                      <Button onClick={advanceKnockout} className="w-full bg-amber-500 hover:bg-amber-600">
+                        <ChevronRight className="w-4 h-4 mr-2" /> Advance to Next Round
+                      </Button>
+                    </div>
+                  )}
+                  {championship.current_stage === 'final' && allCurrentStageVerified && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 w-full text-center">
+                      <Trophy className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+                      <p className="text-amber-800 font-semibold">Championship Complete!</p>
+                      <p className="text-amber-700 text-sm">The final has been verified.</p>
+                    </div>
                   )}
                 </div>
               </div>
