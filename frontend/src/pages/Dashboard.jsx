@@ -46,7 +46,12 @@ const Dashboard = () => {
 
   const openDeleteDialog = (type, item, e) => {
     e.stopPropagation(); // Prevent card click navigation
-    setDeleteDialog({ open: true, type, item });
+    setDeleteDialog({ open: true, type, item, action: 'delete' });
+  };
+
+  const openArchiveDialog = (type, item, e) => {
+    e.stopPropagation(); // Prevent card click navigation
+    setDeleteDialog({ open: true, type, item, action: 'archive' });
   };
 
   const handleDelete = async () => {
@@ -59,10 +64,27 @@ const Dashboard = () => {
         await axios.delete(`${API}/championships/${item.id}`, { headers: getAuthHeader() });
         toast.success('Championship deleted');
       }
-      setDeleteDialog({ open: false, type: null, item: null });
+      setDeleteDialog({ open: false, type: null, item: null, action: null });
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to delete');
+    }
+  };
+
+  const handleArchive = async () => {
+    const { type, item } = deleteDialog;
+    try {
+      if (type === 'tournament') {
+        await axios.post(`${API}/tournaments/${item.id}/archive`, {}, { headers: getAuthHeader() });
+        toast.success('Tournament archived successfully!');
+      } else {
+        await axios.post(`${API}/championships/${item.id}/archive`, {}, { headers: getAuthHeader() });
+        toast.success('Championship archived successfully!');
+      }
+      setDeleteDialog({ open: false, type: null, item: null, action: null });
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to archive');
     }
   };
 
