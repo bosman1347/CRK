@@ -1131,10 +1131,24 @@ async def upload_participants(championship_id: str, file: UploadFile = File(...)
     # Read file content
     content = await file.read()
     
+    # Log file info for debugging
+    logging.info(f"Received file: {file.filename}, size: {len(content)} bytes, content_type: {file.content_type}")
+    
     # Try to decode as CSV
     try:
         # Handle both CSV and Excel-exported CSV
-        text_content = content.decode('utf-8-sig')  # Handle BOM
+        # Try UTF-8 with BOM first, then fall back to other encodings
+        text_content = None
+        for encoding in ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252']:
+            try:
+                text_content = content.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                continue
+        
+        if text_content is None:
+            raise HTTPException(status_code=400, detail="Unable to read file. Please save as CSV (UTF-8) format.")
+        
         reader = csv.DictReader(io.StringIO(text_content))
         
         # Normalize column names
@@ -1142,20 +1156,24 @@ async def upload_participants(championship_id: str, file: UploadFile = File(...)
         for row in reader:
             normalized_row = {}
             for key, value in row.items():
+                if key is None:
+                    continue
                 normalized_key = key.strip().lower()
                 normalized_row[normalized_key] = value.strip() if value else ""
             rows.append(normalized_row)
         
         if not rows:
-            raise HTTPException(status_code=400, detail="CSV file is empty")
+            raise HTTPException(status_code=400, detail="CSV file is empty or has no data rows")
         
         # Check required columns
         first_row_keys = list(rows[0].keys())
+        logging.info(f"CSV columns found: {first_row_keys}")
+        
         if 'section' not in first_row_keys or 'name' not in first_row_keys:
-            raise HTTPException(status_code=400, detail="CSV must have 'Section' and 'Name' columns")
+            raise HTTPException(status_code=400, detail=f"CSV must have 'Section' and 'Name' columns. Found columns: {first_row_keys}")
         
     except UnicodeDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid file format. Please upload a CSV file.")
+        raise HTTPException(status_code=400, detail="Invalid file format. Please save as CSV (UTF-8) format from Excel.")
     
     # Clear existing sections and participants
     await db.championship_sections.delete_many({"championship_id": championship_id})
