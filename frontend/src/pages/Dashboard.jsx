@@ -76,6 +76,14 @@ const Dashboard = () => {
             </div>
             <div className="flex gap-3">
               <Button
+                onClick={() => navigate('/archives')}
+                variant="outline"
+                className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+              >
+                <Archive className="w-4 h-4 mr-2" />
+                Archives
+              </Button>
+              <Button
                 onClick={() => navigate('/settings')}
                 variant="outline"
                 className="bg-white/10 text-white border-white/30 hover:bg-white/20"
