@@ -9,7 +9,7 @@ import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, QrCode, CheckCircle, ChevronRight, Printer, Eye, Trophy } from 'lucide-react';
+import { ArrowLeft, QrCode, CheckCircle, ChevronRight, Printer, Eye, Trophy, Archive } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import axios from 'axios';
 import PrintableScorecard from '../components/PrintableScorecard';
