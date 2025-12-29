@@ -45,6 +45,7 @@ const UmpireTournament = () => {
   });
   
   const [currentRoundData, setCurrentRoundData] = useState(null);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const { getAuthHeader } = useAuth();
   const navigate = useNavigate();
 
