@@ -867,9 +867,12 @@ B,Player 6"""
             200
         )
         
-        if success and 'knockout_participants' in response:
-            print(f"   Knockout bracket created with {response.get('knockout_participants', 0)} participants")
-            print(f"   Matches created: {response.get('matches_created', 0)}")
+        if success:
+            print(f"   Knockout bracket created successfully")
+            if 'knockout_participants' in response:
+                print(f"   Knockout participants: {response.get('knockout_participants', 0)}")
+            if 'matches_created' in response:
+                print(f"   Matches created: {response.get('matches_created', 0)}")
             return True
         return False
 
