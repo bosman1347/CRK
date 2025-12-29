@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from 'sonner';
-import { Plus, Trophy, LogOut, Calendar, Users, Settings, Crown } from 'lucide-react';
+import { Plus, Trophy, LogOut, Calendar, Users, Settings, Crown, Archive } from 'lucide-react';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
