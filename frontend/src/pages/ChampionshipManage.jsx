@@ -707,6 +707,42 @@ const ChampionshipManage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Archive Confirmation Dialog */}
+      <Dialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Archive Championship?</DialogTitle>
+            <DialogDescription>
+              This will save the final results and standings, then delete the championship data.
+              The archived results will be kept for 2 years.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <p className="text-sm text-amber-800">
+                <strong>What gets saved:</strong>
+              </p>
+              <ul className="text-sm text-amber-700 mt-2 list-disc list-inside">
+                <li>Championship name</li>
+                <li>Winner & Runner-up</li>
+                <li>Final scores</li>
+                <li>Section standings</li>
+                <li>All participant names</li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => setShowArchiveDialog(false)} className="flex-1">
+              Cancel
+            </Button>
+            <Button onClick={archiveChampionship} className="flex-1 bg-amber-500 hover:bg-amber-600">
+              <Archive className="w-4 h-4 mr-2" />
+              Archive & Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
