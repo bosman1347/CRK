@@ -894,21 +894,21 @@ B,Player 6"""
             return True
         return False
 
-    def test_get_public_championship_bracket(self):
-        """Test getting public championship bracket"""
+    def test_advance_knockout_round(self):
+        """Test advancing knockout round"""
         if not self.championship_id:
             print("❌ No championship ID available")
             return False
             
         success, response = self.run_test(
-            "Get Public Championship Bracket",
-            "GET",
-            f"public/championships/{self.championship_id}/bracket",
+            "Advance Knockout Round",
+            "POST",
+            f"championships/{self.championship_id}/advance-knockout",
             200
         )
         
         if success:
-            print(f"   Public bracket retrieved")
+            print(f"   Knockout round advanced successfully")
             return True
         return False
 
