@@ -283,6 +283,44 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, type: null, item: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {deleteDialog.type === 'tournament' ? 'Tournament' : 'Championship'}?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to permanently delete "{deleteDialog.item?.name}"? 
+              This will remove all matches, scores, and participant data. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-800">
+                <strong>Warning:</strong> This is permanent deletion without archiving. 
+                If you want to keep the results, use the "Archive" feature instead.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => setDeleteDialog({ open: false, type: null, item: null })} 
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDelete} 
+              className="flex-1"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Permanently
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
