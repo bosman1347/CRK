@@ -54,9 +54,14 @@ const ChampionshipManage = () => {
       setParticipants(participantsRes.data);
       setMatches(matchesRes.data);
       
-      // Get access token if available
-      if (matchesRes.data.length > 0 && matchesRes.data[0].access_token) {
-        setAccessToken(matchesRes.data[0].access_token);
+      // Get access token for current stage
+      const currentStage = champRes.data.current_stage;
+      if (currentStage && currentStage !== 'setup' && currentStage !== 'completed') {
+        // Find a match from the current stage to get its access token
+        const currentStageMatch = matchesRes.data.find(m => m.stage === currentStage && m.access_token);
+        if (currentStageMatch) {
+          setAccessToken(currentStageMatch.access_token);
+        }
       }
     } catch (error) {
       toast.error('Failed to load championship data');
