@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from 'sonner';
-import { Plus, Trophy, LogOut, Calendar, Users, Settings } from 'lucide-react';
+import { Plus, Trophy, LogOut, Calendar, Users, Settings, Crown } from 'lucide-react';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -13,22 +13,25 @@ const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_matchtrack-6/ar
 
 const Dashboard = () => {
   const [tournaments, setTournaments] = useState([]);
+  const [championships, setChampionships] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user, logout, getAuthHeader } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchTournaments();
+    fetchData();
   }, []);
 
-  const fetchTournaments = async () => {
+  const fetchData = async () => {
     try {
-      const response = await axios.get(`${API}/tournaments`, {
-        headers: getAuthHeader()
-      });
-      setTournaments(response.data);
+      const [tournamentsRes, championshipsRes] = await Promise.all([
+        axios.get(`${API}/tournaments`, { headers: getAuthHeader() }),
+        axios.get(`${API}/championships`, { headers: getAuthHeader() })
+      ]);
+      setTournaments(tournamentsRes.data);
+      setChampionships(championshipsRes.data);
     } catch (error) {
-      toast.error('Failed to load tournaments');
+      toast.error('Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -43,6 +46,8 @@ const Dashboard = () => {
     const badges = {
       setup: 'bg-blue-100 text-blue-700',
       active: 'bg-green-100 text-green-700',
+      round_robin: 'bg-emerald-100 text-emerald-700',
+      knockout: 'bg-amber-100 text-amber-700',
       completed: 'bg-gray-100 text-gray-700'
     };
     return badges[status] || badges.setup;
@@ -94,69 +99,141 @@ const Dashboard = () => {
       </div>
 
       <div className="container mx-auto px-6 py-12">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-heading">Your Tournaments</h2>
-          <Button
-            onClick={() => navigate('/tournaments/create')}
-            className="bg-primary hover:bg-primary/90"
-            data-testid="create-tournament-button"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create Tournament
-          </Button>
+        {/* Championships Section */}
+        <div className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-heading flex items-center gap-2">
+              <Crown className="w-6 h-6 text-amber-500" />
+              Club Championships
+            </h2>
+            <Button
+              onClick={() => navigate('/championships/create')}
+              className="bg-amber-500 hover:bg-amber-600"
+              data-testid="create-championship-button"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Championship
+            </Button>
+          </div>
+
+          {loading ? (
+            <p className="text-muted-foreground">Loading...</p>
+          ) : championships.length === 0 ? (
+            <Card className="floating-card border-amber-200 bg-amber-50/50">
+              <CardContent className="py-8 text-center">
+                <Crown className="w-12 h-12 text-amber-300 mx-auto mb-3" />
+                <h3 className="text-lg font-heading mb-2">No Championships Yet</h3>
+                <p className="text-muted-foreground text-sm mb-4">Create a club championship for singles, pairs, triples, or fours</p>
+                <Button
+                  onClick={() => navigate('/championships/create')}
+                  variant="outline"
+                  className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Your First Championship
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {championships.map((championship) => (
+                <Card
+                  key={championship.id}
+                  className="floating-card border-amber-200 cursor-pointer hover:border-amber-300 transition-colors"
+                  onClick={() => navigate(`/championships/${championship.id}`)}
+                >
+                  <CardHeader>
+                    <div className="flex justify-between items-start mb-2">
+                      <Crown className="w-10 h-10 text-amber-500" />
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(championship.status)}`}>
+                        {championship.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <CardTitle className="text-xl font-heading">{championship.name}</CardTitle>
+                    <CardDescription>
+                      <span className="capitalize">{championship.competition_type}</span> • <span className="capitalize">{championship.gender_category}</span>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span className="capitalize">{championship.current_stage.replace(/_/g, ' ')}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
 
-        {loading ? (
-          <div className="text-center py-12" data-testid="loading-state">
-            <p className="text-muted-foreground">Loading tournaments...</p>
+        {/* Tournaments Section */}
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-heading flex items-center gap-2">
+              <Trophy className="w-6 h-6 text-primary" />
+              Social Tournaments
+            </h2>
+            <Button
+              onClick={() => navigate('/tournaments/create')}
+              className="bg-primary hover:bg-primary/90"
+              data-testid="create-tournament-button"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Tournament
+            </Button>
           </div>
-        ) : tournaments.length === 0 ? (
-          <Card className="floating-card border-stone-200" data-testid="empty-state">
-            <CardContent className="py-12 text-center">
-              <Trophy className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-heading mb-2">No tournaments yet</h3>
-              <p className="text-muted-foreground mb-6">Create your first lawn bowls tournament to get started</p>
-              <Button
-                onClick={() => navigate('/tournaments/create')}
-                className="bg-primary hover:bg-primary/90"
-                data-testid="empty-create-button"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Your First Tournament
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="tournament-grid">
-            {tournaments.map((tournament) => (
-              <Card
-                key={tournament.id}
-                className="floating-card border-stone-200 cursor-pointer"
-                onClick={() => navigate(`/tournaments/${tournament.id}`)}
-                data-testid={`tournament-card-${tournament.id}`}
-              >
-                <CardHeader>
-                  <div className="flex justify-between items-start mb-2">
-                    <Trophy className="w-10 h-10 text-primary" />
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(tournament.status)}`}>
-                      {tournament.status}
-                    </span>
-                  </div>
-                  <CardTitle className="text-xl font-heading">{tournament.name}</CardTitle>
-                  <CardDescription>Created {new Date(tournament.created_at).toLocaleDateString()}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      <span className="stats-number">Round {tournament.current_round}/{tournament.num_rounds || 7}</span>
+
+          {loading ? (
+            <p className="text-muted-foreground">Loading...</p>
+          ) : tournaments.length === 0 ? (
+            <Card className="floating-card border-stone-200">
+              <CardContent className="py-8 text-center">
+                <Trophy className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <h3 className="text-lg font-heading mb-2">No Tournaments Yet</h3>
+                <p className="text-muted-foreground text-sm mb-4">Create a social tournament with Skins or Standard scoring</p>
+                <Button
+                  onClick={() => navigate('/tournaments/create')}
+                  variant="outline"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Your First Tournament
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="tournament-grid">
+              {tournaments.map((tournament) => (
+                <Card
+                  key={tournament.id}
+                  className="floating-card border-stone-200 cursor-pointer"
+                  onClick={() => navigate(`/tournaments/${tournament.id}`)}
+                  data-testid={`tournament-card-${tournament.id}`}
+                >
+                  <CardHeader>
+                    <div className="flex justify-between items-start mb-2">
+                      <Trophy className="w-10 h-10 text-primary" />
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(tournament.status)}`}>
+                        {tournament.status}
+                      </span>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                    <CardTitle className="text-xl font-heading">{tournament.name}</CardTitle>
+                    <CardDescription>Created {new Date(tournament.created_at).toLocaleDateString()}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span className="stats-number">Round {tournament.current_round}/{tournament.num_rounds || 7}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
