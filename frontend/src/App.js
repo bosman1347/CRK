@@ -18,6 +18,8 @@ import CreateChampionship from './pages/CreateChampionship';
 import ChampionshipManage from './pages/ChampionshipManage';
 import ChampionshipScoreEntry from './pages/ChampionshipScoreEntry';
 import PublicChampionshipStandings from './pages/PublicChampionshipStandings';
+// Archive import
+import Archives from './pages/Archives';
 import '@/App.css';
 
 const PrivateRoute = ({ children }) => {
