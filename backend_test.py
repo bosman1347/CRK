@@ -803,9 +803,12 @@ B,Player 6"""
             print("❌ No championship ID or match IDs available")
             return False
         
-        print(f"\n   Completing {len(self.championship_match_ids)} round robin matches...")
+        print(f"\n   Completing remaining round robin matches...")
         
-        for i, match_id in enumerate(self.championship_match_ids):
+        # Skip the first match as it was already verified in previous test
+        remaining_matches = self.championship_match_ids[1:]
+        
+        for i, match_id in enumerate(remaining_matches):
             # Vary scores to create realistic results
             p1_shots = 15 + (i % 3)
             p2_shots = 12 + (i % 4)
@@ -816,7 +819,7 @@ B,Player 6"""
             }
             
             success, response = self.run_test(
-                f"Verify Match {i+1}",
+                f"Verify Match {i+2}",  # Start from match 2
                 "POST",
                 f"championships/{self.championship_id}/matches/{match_id}/verify",
                 200,
@@ -824,7 +827,7 @@ B,Player 6"""
             )
             
             if not success:
-                print(f"   ❌ Failed to verify match {i+1}")
+                print(f"   ❌ Failed to verify match {i+2}")
                 return False
         
         print(f"   ✅ All {len(self.championship_match_ids)} matches completed")
