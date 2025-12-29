@@ -960,14 +960,23 @@ B,Player 6"""
         if not self.test_generate_knockout_bracket():
             return False
         
-        # Step 11: Test public endpoints
-        if not self.test_get_public_championship_standings():
+    def test_get_public_championship_bracket(self):
+        """Test getting public championship bracket"""
+        if not self.championship_id:
+            print("❌ No championship ID available")
             return False
-        if not self.test_get_public_championship_bracket():
-            return False
+            
+        success, response = self.run_test(
+            "Get Public Championship Bracket",
+            "GET",
+            f"public/championships/{self.championship_id}/bracket",
+            200
+        )
         
-        print("🎉 Complete championship flow test passed!")
-        return True
+        if success:
+            print(f"   Public bracket retrieved")
+            return True
+        return False
 
 def main():
     print("🏆 Starting Lawn Bowls Tournament API Tests")
