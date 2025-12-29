@@ -186,6 +186,17 @@ const UmpireTournament = () => {
     }, 500);
   };
 
+  const archiveTournament = async () => {
+    try {
+      await axios.post(`${API}/tournaments/${id}/archive`, {}, { headers: getAuthHeader() });
+      toast.success('Tournament archived successfully!');
+      setShowArchiveDialog(false);
+      navigate('/archives');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to archive tournament');
+    }
+  };
+
   const printQRCode = () => {
     if (!currentRoundData || !currentRoundData.access_token) {
       toast.error('Round data not loaded');
