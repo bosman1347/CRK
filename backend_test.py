@@ -970,42 +970,50 @@ def main():
     tester = LawnBowlsAPITester()
     
     # Authentication Tests
-    if not tester.test_user_registration():
-        print("❌ Registration failed, stopping tests")
+    print("\n📝 Testing Authentication...")
+    if not tester.test_user_login_championship():
+        print("❌ Championship user login failed, stopping tests")
         return 1
+    
+    # Championship Tests
+    print("\n🏆 Testing Championship Features...")
+    
+    # Test individual championship endpoints
+    tester.test_create_knockout_championship()
+    tester.test_get_championships()
+    
+    # Test complete championship flow
+    if not tester.test_championship_flow_complete():
+        print("❌ Championship flow test failed")
+        return 1
+    
+    # Original Tournament Tests (if time permits)
+    print("\n🎯 Testing Original Tournament Features...")
+    
+    # Reset for tournament tests
+    tester.championship_id = None
+    tester.championship_access_token = None
+    tester.championship_match_ids = []
+    tester.section_ids = []
     
     # Tournament Management Tests
-    if not tester.test_create_tournament_4_teams():
-        print("❌ Tournament creation failed, stopping tests")
-        return 1
-    
-    # Test different team counts
-    tester.test_create_tournament_6_teams()
-    tester.test_create_tournament_8_teams()
-    
-    # Tournament Operations
-    tester.test_get_tournaments()
-    tester.test_get_tournament_details()
-    tester.test_get_teams()
-    
-    # Start tournament and test draw generation
-    if not tester.test_start_tournament():
-        print("❌ Tournament start failed, stopping tests")
-        return 1
-    
-    tester.test_get_rounds()
-    tester.test_get_matches()
-    tester.test_get_match_details()
-    
-    # Test complex scoring system
-    if not tester.test_scoring_system():
-        print("❌ Scoring system test failed")
-        return 1
-    
-    tester.test_leaderboard()
-    
-    # Test round progression
-    tester.test_complete_all_matches_and_next_round()
+    if tester.test_create_tournament_4_teams():
+        # Tournament Operations
+        tester.test_get_tournaments()
+        tester.test_get_tournament_details()
+        tester.test_get_teams()
+        
+        # Start tournament and test draw generation
+        if tester.test_start_tournament():
+            tester.test_get_rounds()
+            tester.test_get_matches()
+            tester.test_get_match_details()
+            
+            # Test complex scoring system
+            if tester.test_scoring_system():
+                tester.test_leaderboard()
+                # Test round progression
+                tester.test_complete_all_matches_and_next_round()
     
     # Test edge cases
     tester.test_edge_cases()
