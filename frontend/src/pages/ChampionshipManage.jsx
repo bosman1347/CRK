@@ -331,7 +331,7 @@ const ChampionshipManage = () => {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".csv,.xlsx"
+                      accept=".csv,text/csv,application/vnd.ms-excel,application/csv"
                       onChange={handleFileUpload}
                       className="hidden"
                     />
