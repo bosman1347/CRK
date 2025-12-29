@@ -145,6 +145,17 @@ const ChampionshipManage = () => {
     }
   };
 
+  const archiveChampionship = async () => {
+    try {
+      await axios.post(`${API}/championships/${id}/archive`, {}, { headers: getAuthHeader() });
+      toast.success('Championship archived successfully!');
+      setShowArchiveDialog(false);
+      navigate('/archives');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to archive championship');
+    }
+  };
+
   const submitManualKnockout = async () => {
     const validEntries = knockoutEntries.filter(e => e.participant1_name.trim() && e.participant2_name.trim());
     if (validEntries.length === 0) {
