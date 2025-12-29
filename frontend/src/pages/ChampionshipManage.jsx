@@ -31,6 +31,7 @@ const ChampionshipManage = () => {
   const [verifyScores, setVerifyScores] = useState({ participant1_shots: '', participant2_shots: '' });
   const [knockoutEntries, setKnockoutEntries] = useState([{ participant1_name: '', participant2_name: '' }]);
   const [showKnockoutDialog, setShowKnockoutDialog] = useState(false);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const fileInputRef = useRef(null);
   
   const { getAuthHeader } = useAuth();
