@@ -15,6 +15,11 @@ class LawnBowlsAPITester:
         self.team_ids = []
         self.round_id = None
         self.match_ids = []
+        # Championship testing variables
+        self.championship_id = None
+        self.championship_access_token = None
+        self.championship_match_ids = []
+        self.section_ids = []
 
     def run_test(self, name, method, endpoint, expected_status, data=None, params=None):
         """Run a single API test"""
