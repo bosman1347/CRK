@@ -262,11 +262,19 @@ const Dashboard = () => {
                     <CardDescription>Created {new Date(tournament.created_at).toLocaleDateString()}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="w-4 h-4" />
                         <span className="stats-number">Round {tournament.current_round}/{tournament.num_rounds || 7}</span>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={(e) => openDeleteDialog('tournament', tournament, e)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
