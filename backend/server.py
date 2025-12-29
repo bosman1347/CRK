@@ -1056,6 +1056,946 @@ async def get_public_summary(tournament_id: str):
         "verified_matches": [Match(**m) for m in all_matches]
     }
 
+# ==================== CHAMPIONSHIP ROUTES ====================
+
+def generate_round_robin_schedule(participants: List[dict]) -> List[tuple]:
+    """Generate a round-robin schedule where each participant plays every other once."""
+    return list(combinations(participants, 2))
+
+async def get_championship_manager(championship_id: str, current_user: User = Depends(get_current_user)):
+    """Verify user can manage this championship (is creator)"""
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    
+    if championship.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied - must be championship creator")
+    
+    return current_user, championship
+
+@api_router.post("/championships")
+async def create_championship(championship_data: ChampionshipCreate, current_user: User = Depends(get_current_user)):
+    """Create a new club championship"""
+    import uuid
+    
+    championship_id = str(uuid.uuid4())
+    
+    championship_doc = {
+        "id": championship_id,
+        "name": championship_data.name,
+        "creator_id": current_user.id,
+        "competition_type": championship_data.competition_type,
+        "gender_category": championship_data.gender_category,
+        "age_category": championship_data.age_category if championship_data.competition_type == "singles" else "open",
+        "start_type": championship_data.start_type,
+        "ends_per_match": championship_data.ends_per_match,
+        "finals_ends": championship_data.finals_ends,
+        "status": "setup",
+        "current_stage": "setup",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.championships.insert_one(championship_doc)
+    
+    return {"championship": Championship(**championship_doc)}
+
+@api_router.get("/championships")
+async def get_championships(current_user: User = Depends(get_current_user)):
+    """Get all championships created by the current user"""
+    championships = await db.championships.find({"creator_id": current_user.id}, {"_id": 0}).to_list(None)
+    return [Championship(**c) for c in championships]
+
+@api_router.get("/championships/{championship_id}")
+async def get_championship(championship_id: str, current_user: User = Depends(get_current_user)):
+    """Get a specific championship"""
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    return Championship(**championship)
+
+@api_router.post("/championships/{championship_id}/upload-participants")
+async def upload_participants(championship_id: str, file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+    """Upload CSV/Excel with sections and participants"""
+    import uuid
+    
+    # Verify access
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    if championship.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if championship.get("status") != "setup":
+        raise HTTPException(status_code=400, detail="Cannot upload participants after championship has started")
+    
+    # Read file content
+    content = await file.read()
+    
+    # Try to decode as CSV
+    try:
+        # Handle both CSV and Excel-exported CSV
+        text_content = content.decode('utf-8-sig')  # Handle BOM
+        reader = csv.DictReader(io.StringIO(text_content))
+        
+        # Normalize column names
+        rows = []
+        for row in reader:
+            normalized_row = {}
+            for key, value in row.items():
+                normalized_key = key.strip().lower()
+                normalized_row[normalized_key] = value.strip() if value else ""
+            rows.append(normalized_row)
+        
+        if not rows:
+            raise HTTPException(status_code=400, detail="CSV file is empty")
+        
+        # Check required columns
+        first_row_keys = list(rows[0].keys())
+        if 'section' not in first_row_keys or 'name' not in first_row_keys:
+            raise HTTPException(status_code=400, detail="CSV must have 'Section' and 'Name' columns")
+        
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid file format. Please upload a CSV file.")
+    
+    # Clear existing sections and participants
+    await db.championship_sections.delete_many({"championship_id": championship_id})
+    await db.championship_participants.delete_many({"championship_id": championship_id})
+    
+    # Group by section
+    sections_data = {}
+    for row in rows:
+        section_name = row.get('section', '').upper()
+        participant_name = row.get('name', '')
+        
+        if not section_name or not participant_name:
+            continue
+        
+        if section_name not in sections_data:
+            sections_data[section_name] = []
+        sections_data[section_name].append(participant_name)
+    
+    if not sections_data:
+        raise HTTPException(status_code=400, detail="No valid sections/participants found in file")
+    
+    # Create sections and participants
+    created_sections = []
+    created_participants = []
+    
+    for section_name, participants in sections_data.items():
+        section_id = str(uuid.uuid4())
+        section_doc = {
+            "id": section_id,
+            "championship_id": championship_id,
+            "name": section_name,
+            "status": "pending"
+        }
+        await db.championship_sections.insert_one(section_doc)
+        created_sections.append(section_doc)
+        
+        for participant_name in participants:
+            participant_id = str(uuid.uuid4())
+            participant_doc = {
+                "id": participant_id,
+                "championship_id": championship_id,
+                "section_id": section_id,
+                "name": participant_name,
+                "matches_played": 0,
+                "wins": 0,
+                "draws": 0,
+                "losses": 0,
+                "points": 0,
+                "shots_for": 0,
+                "shots_against": 0,
+                "shot_difference": 0,
+                "eliminated": False,
+                "knockout_seed": None
+            }
+            await db.championship_participants.insert_one(participant_doc)
+            created_participants.append(participant_doc)
+    
+    return {
+        "message": f"Uploaded {len(created_participants)} participants in {len(created_sections)} sections",
+        "sections": [ChampionshipSection(**s) for s in created_sections],
+        "participant_count": len(created_participants)
+    }
+
+@api_router.get("/championships/{championship_id}/sections")
+async def get_championship_sections(championship_id: str, current_user: User = Depends(get_current_user)):
+    """Get all sections for a championship"""
+    sections = await db.championship_sections.find({"championship_id": championship_id}, {"_id": 0}).to_list(None)
+    return [ChampionshipSection(**s) for s in sections]
+
+@api_router.get("/championships/{championship_id}/participants")
+async def get_championship_participants(championship_id: str, current_user: User = Depends(get_current_user)):
+    """Get all participants for a championship"""
+    participants = await db.championship_participants.find({"championship_id": championship_id}, {"_id": 0}).to_list(None)
+    return [ChampionshipParticipant(**p) for p in participants]
+
+@api_router.get("/championships/{championship_id}/sections/{section_id}/standings")
+async def get_section_standings(championship_id: str, section_id: str, current_user: User = Depends(get_current_user)):
+    """Get standings for a specific section"""
+    participants = await db.championship_participants.find(
+        {"championship_id": championship_id, "section_id": section_id}, 
+        {"_id": 0}
+    ).to_list(None)
+    
+    # Sort by: 1) points (desc), 2) shot_difference (desc), 3) shots_for (desc)
+    participants_sorted = sorted(participants, key=lambda p: (
+        -p.get("points", 0),
+        -p.get("shot_difference", 0),
+        -p.get("shots_for", 0)
+    ))
+    
+    return [ChampionshipParticipant(**p) for p in participants_sorted]
+
+@api_router.post("/championships/{championship_id}/generate-round-robin")
+async def generate_round_robin(championship_id: str, current_user: User = Depends(get_current_user)):
+    """Generate round-robin matches for all sections"""
+    import uuid
+    
+    # Verify access
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    if championship.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if championship.get("start_type") != "round_robin":
+        raise HTTPException(status_code=400, detail="This championship does not have a round-robin stage")
+    
+    if championship.get("status") not in ["setup"]:
+        raise HTTPException(status_code=400, detail="Round robin already generated")
+    
+    # Get all sections
+    sections = await db.championship_sections.find({"championship_id": championship_id}, {"_id": 0}).to_list(None)
+    if not sections:
+        raise HTTPException(status_code=400, detail="No sections found. Please upload participants first.")
+    
+    # Clear any existing matches
+    await db.championship_matches.delete_many({"championship_id": championship_id, "stage": "round_robin"})
+    
+    # Generate matches for each section
+    all_rinks = [("A", i) for i in range(1, 7)] + [("B", i) for i in range(1, 7)]
+    rink_index = 0
+    total_matches = 0
+    
+    # Generate access token for round robin stage
+    stage_access_token = secrets.token_urlsafe(32)
+    
+    for section in sections:
+        participants = await db.championship_participants.find(
+            {"championship_id": championship_id, "section_id": section["id"]}, 
+            {"_id": 0}
+        ).to_list(None)
+        
+        if len(participants) < 2:
+            continue
+        
+        # Generate round-robin schedule
+        matchups = generate_round_robin_schedule(participants)
+        
+        for p1, p2 in matchups:
+            rink = all_rinks[rink_index % len(all_rinks)]
+            rink_index += 1
+            
+            match_id = str(uuid.uuid4())
+            match_doc = {
+                "id": match_id,
+                "championship_id": championship_id,
+                "section_id": section["id"],
+                "stage": "round_robin",
+                "bracket_position": None,
+                "participant1_id": p1["id"],
+                "participant2_id": p2["id"],
+                "participant1_name": p1["name"],
+                "participant2_name": p2["name"],
+                "participant1_shots": None,
+                "participant2_shots": None,
+                "winner_id": None,
+                "is_draw": False,
+                "green": rink[0],
+                "rink": rink[1],
+                "scores_entered": False,
+                "verified": False,
+                "verified_by": None,
+                "verified_at": None,
+                "status": "pending",
+                "access_token": stage_access_token
+            }
+            await db.championship_matches.insert_one(match_doc)
+            total_matches += 1
+        
+        # Update section status
+        await db.championship_sections.update_one(
+            {"id": section["id"]},
+            {"$set": {"status": "in_progress"}}
+        )
+    
+    # Update championship status
+    await db.championships.update_one(
+        {"id": championship_id},
+        {"$set": {"status": "round_robin", "current_stage": "round_robin"}}
+    )
+    
+    return {
+        "message": f"Generated {total_matches} round-robin matches",
+        "total_matches": total_matches,
+        "access_token": stage_access_token
+    }
+
+@api_router.get("/championships/{championship_id}/matches")
+async def get_championship_matches(championship_id: str, stage: Optional[str] = None, section_id: Optional[str] = None, current_user: User = Depends(get_current_user)):
+    """Get matches for a championship, optionally filtered by stage or section"""
+    query = {"championship_id": championship_id}
+    if stage:
+        query["stage"] = stage
+    if section_id:
+        query["section_id"] = section_id
+    
+    matches = await db.championship_matches.find(query, {"_id": 0}).to_list(None)
+    return [ChampionshipMatch(**m) for m in matches]
+
+@api_router.get("/championships/{championship_id}/current-access-token")
+async def get_championship_access_token(championship_id: str, current_user: User = Depends(get_current_user)):
+    """Get the access token for current stage matches"""
+    # Verify access
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    if championship.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Get any match with access token
+    match = await db.championship_matches.find_one(
+        {"championship_id": championship_id, "access_token": {"$ne": None}},
+        {"_id": 0, "access_token": 1}
+    )
+    
+    if not match:
+        raise HTTPException(status_code=404, detail="No active stage found")
+    
+    return {"access_token": match["access_token"]}
+
+# Public championship score entry routes (via access token)
+@api_router.get("/championship-round/{access_token}")
+async def get_championship_round_by_token(access_token: str):
+    """Get championship matches by access token (for players)"""
+    matches = await db.championship_matches.find(
+        {"access_token": access_token}, 
+        {"_id": 0}
+    ).to_list(None)
+    
+    if not matches:
+        raise HTTPException(status_code=404, detail="Invalid or expired access token")
+    
+    # Get championship info
+    championship_id = matches[0]["championship_id"]
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    
+    # Get sections
+    sections = await db.championship_sections.find({"championship_id": championship_id}, {"_id": 0}).to_list(None)
+    
+    return {
+        "championship": Championship(**championship),
+        "matches": [ChampionshipMatch(**m) for m in matches],
+        "sections": [ChampionshipSection(**s) for s in sections]
+    }
+
+@api_router.post("/championship-round/{access_token}/match/{match_id}/scores")
+async def submit_championship_match_scores(access_token: str, match_id: str, score_entry: ChampionshipMatchScoreEntry):
+    """Submit scores for a championship match (by players)"""
+    # Verify match exists and has correct token
+    match = await db.championship_matches.find_one(
+        {"id": match_id, "access_token": access_token}, 
+        {"_id": 0}
+    )
+    
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    if match["verified"]:
+        raise HTTPException(status_code=400, detail="Match already verified - scores cannot be changed")
+    
+    if score_entry.participant1_shots < 0 or score_entry.participant2_shots < 0:
+        raise HTTPException(status_code=400, detail="Shots cannot be negative")
+    
+    # Get championship for validation
+    championship = await db.championships.find_one({"id": match["championship_id"]}, {"_id": 0})
+    
+    # For singles (first to 21), validate max
+    if championship.get("competition_type") == "singles":
+        # Allow up to 21 for regular matches, finals_ends for finals
+        max_shots = 21
+        if score_entry.participant1_shots > max_shots or score_entry.participant2_shots > max_shots:
+            raise HTTPException(status_code=400, detail=f"Singles matches have max {max_shots} shots")
+    
+    # Update match with pending scores
+    await db.championship_matches.update_one(
+        {"id": match_id},
+        {"$set": {
+            "participant1_shots": score_entry.participant1_shots,
+            "participant2_shots": score_entry.participant2_shots,
+            "scores_entered": True
+        }}
+    )
+    
+    return {"message": "Scores submitted successfully - awaiting verification"}
+
+@api_router.post("/championships/{championship_id}/matches/{match_id}/verify")
+async def verify_championship_match(
+    championship_id: str, 
+    match_id: str, 
+    score_entry: ChampionshipMatchScoreEntry, 
+    current_user: User = Depends(get_current_user)
+):
+    """Verify and finalize a championship match score"""
+    # Verify access
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    if championship.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    match = await db.championship_matches.find_one({"id": match_id, "championship_id": championship_id}, {"_id": 0})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    if match["verified"]:
+        raise HTTPException(status_code=400, detail="Match already verified")
+    
+    p1_shots = score_entry.participant1_shots
+    p2_shots = score_entry.participant2_shots
+    
+    # Determine winner
+    winner_id = None
+    is_draw = False
+    
+    if match["stage"] == "round_robin":
+        # Round robin allows draws
+        if p1_shots > p2_shots:
+            winner_id = match["participant1_id"]
+        elif p2_shots > p1_shots:
+            winner_id = match["participant2_id"]
+        else:
+            is_draw = True
+    else:
+        # Knockout matches must have a winner
+        if p1_shots == p2_shots:
+            raise HTTPException(status_code=400, detail="Knockout matches cannot end in a draw")
+        winner_id = match["participant1_id"] if p1_shots > p2_shots else match["participant2_id"]
+    
+    # Update match
+    await db.championship_matches.update_one(
+        {"id": match_id},
+        {"$set": {
+            "participant1_shots": p1_shots,
+            "participant2_shots": p2_shots,
+            "winner_id": winner_id,
+            "is_draw": is_draw,
+            "verified": True,
+            "verified_by": current_user.id,
+            "verified_at": datetime.now(timezone.utc).isoformat(),
+            "status": "completed"
+        }}
+    )
+    
+    # Update participant stats
+    if match["stage"] == "round_robin":
+        # Calculate points: Win=2, Draw=1, Loss=0
+        p1_points = 2 if winner_id == match["participant1_id"] else (1 if is_draw else 0)
+        p2_points = 2 if winner_id == match["participant2_id"] else (1 if is_draw else 0)
+        
+        p1_wins = 1 if winner_id == match["participant1_id"] else 0
+        p1_draws = 1 if is_draw else 0
+        p1_losses = 1 if winner_id == match["participant2_id"] else 0
+        
+        p2_wins = 1 if winner_id == match["participant2_id"] else 0
+        p2_draws = 1 if is_draw else 0
+        p2_losses = 1 if winner_id == match["participant1_id"] else 0
+        
+        # Update participant 1
+        await db.championship_participants.update_one(
+            {"id": match["participant1_id"]},
+            {"$inc": {
+                "matches_played": 1,
+                "wins": p1_wins,
+                "draws": p1_draws,
+                "losses": p1_losses,
+                "points": p1_points,
+                "shots_for": p1_shots,
+                "shots_against": p2_shots,
+                "shot_difference": p1_shots - p2_shots
+            }}
+        )
+        
+        # Update participant 2
+        await db.championship_participants.update_one(
+            {"id": match["participant2_id"]},
+            {"$inc": {
+                "matches_played": 1,
+                "wins": p2_wins,
+                "draws": p2_draws,
+                "losses": p2_losses,
+                "points": p2_points,
+                "shots_for": p2_shots,
+                "shots_against": p1_shots,
+                "shot_difference": p2_shots - p1_shots
+            }}
+        )
+    else:
+        # Knockout match - mark loser as eliminated
+        loser_id = match["participant2_id"] if winner_id == match["participant1_id"] else match["participant1_id"]
+        await db.championship_participants.update_one(
+            {"id": loser_id},
+            {"$set": {"eliminated": True}}
+        )
+    
+    return {"message": "Match verified successfully", "winner_id": winner_id, "is_draw": is_draw}
+
+@api_router.post("/championships/{championship_id}/generate-knockout")
+async def generate_knockout_bracket(championship_id: str, current_user: User = Depends(get_current_user)):
+    """Generate knockout bracket from round-robin winners or for knockout-only championship"""
+    import uuid
+    
+    # Verify access
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    if championship.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    is_knockout_only = championship.get("start_type") == "knockout"
+    
+    if not is_knockout_only:
+        # Check all round robin matches are verified
+        unverified = await db.championship_matches.find_one({
+            "championship_id": championship_id,
+            "stage": "round_robin",
+            "verified": False
+        }, {"_id": 0})
+        
+        if unverified:
+            raise HTTPException(status_code=400, detail="All round-robin matches must be verified first")
+    
+    # Get winners from each section (or all participants for knockout-only)
+    sections = await db.championship_sections.find({"championship_id": championship_id}, {"_id": 0}).to_list(None)
+    
+    knockout_participants = []
+    
+    for section in sections:
+        participants = await db.championship_participants.find(
+            {"championship_id": championship_id, "section_id": section["id"]},
+            {"_id": 0}
+        ).to_list(None)
+        
+        if is_knockout_only:
+            # All participants advance
+            knockout_participants.extend(participants)
+        else:
+            # Get section winner (sorted by points, then shot diff, then shots for)
+            sorted_participants = sorted(participants, key=lambda p: (
+                -p.get("points", 0),
+                -p.get("shot_difference", 0),
+                -p.get("shots_for", 0)
+            ))
+            
+            if sorted_participants:
+                winner = sorted_participants[0]
+                winner["knockout_seed"] = len(knockout_participants) + 1
+                knockout_participants.append(winner)
+                
+                # Update seed in database
+                await db.championship_participants.update_one(
+                    {"id": winner["id"]},
+                    {"$set": {"knockout_seed": winner["knockout_seed"]}}
+                )
+        
+        # Mark section as completed
+        await db.championship_sections.update_one(
+            {"id": section["id"]},
+            {"$set": {"status": "completed"}}
+        )
+    
+    if len(knockout_participants) < 2:
+        raise HTTPException(status_code=400, detail="Need at least 2 participants for knockout stage")
+    
+    # Generate access token for knockout stage
+    knockout_access_token = secrets.token_urlsafe(32)
+    
+    # Determine knockout round name based on number of participants
+    num_participants = len(knockout_participants)
+    if num_participants == 2:
+        round_name = "final"
+    elif num_participants <= 4:
+        round_name = "knockout_semi"
+    elif num_participants <= 8:
+        round_name = "knockout_quarter"
+    else:
+        round_name = "knockout_round_1"
+    
+    # Generate knockout matches
+    all_rinks = [("A", i) for i in range(1, 7)] + [("B", i) for i in range(1, 7)]
+    
+    # Clear existing knockout matches
+    await db.championship_matches.delete_many({
+        "championship_id": championship_id,
+        "stage": {"$ne": "round_robin"}
+    })
+    
+    created_matches = []
+    for i in range(0, len(knockout_participants), 2):
+        if i + 1 >= len(knockout_participants):
+            # Bye - participant advances automatically
+            break
+        
+        p1 = knockout_participants[i]
+        p2 = knockout_participants[i + 1]
+        rink = all_rinks[(i // 2) % len(all_rinks)]
+        
+        match_id = str(uuid.uuid4())
+        match_doc = {
+            "id": match_id,
+            "championship_id": championship_id,
+            "section_id": None,
+            "stage": round_name,
+            "bracket_position": i // 2,
+            "participant1_id": p1["id"],
+            "participant2_id": p2["id"],
+            "participant1_name": p1["name"],
+            "participant2_name": p2["name"],
+            "participant1_shots": None,
+            "participant2_shots": None,
+            "winner_id": None,
+            "is_draw": False,
+            "green": rink[0],
+            "rink": rink[1],
+            "scores_entered": False,
+            "verified": False,
+            "verified_by": None,
+            "verified_at": None,
+            "status": "pending",
+            "access_token": knockout_access_token
+        }
+        await db.championship_matches.insert_one(match_doc)
+        created_matches.append(match_doc)
+    
+    # Update championship status
+    await db.championships.update_one(
+        {"id": championship_id},
+        {"$set": {"status": "knockout", "current_stage": round_name}}
+    )
+    
+    return {
+        "message": f"Generated {len(created_matches)} knockout matches",
+        "round_name": round_name,
+        "matches": [ChampionshipMatch(**m) for m in created_matches],
+        "access_token": knockout_access_token
+    }
+
+@api_router.post("/championships/{championship_id}/advance-knockout")
+async def advance_knockout_round(championship_id: str, current_user: User = Depends(get_current_user)):
+    """Advance to the next knockout round after current matches are verified"""
+    import uuid
+    
+    # Verify access
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    if championship.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    current_stage = championship.get("current_stage", "")
+    if current_stage == "final":
+        raise HTTPException(status_code=400, detail="Championship already at final stage")
+    
+    if not current_stage.startswith("knockout"):
+        raise HTTPException(status_code=400, detail="Championship not in knockout stage")
+    
+    # Check all current knockout matches are verified
+    unverified = await db.championship_matches.find_one({
+        "championship_id": championship_id,
+        "stage": current_stage,
+        "verified": False
+    }, {"_id": 0})
+    
+    if unverified:
+        raise HTTPException(status_code=400, detail="All current knockout matches must be verified first")
+    
+    # Get winners from current stage
+    current_matches = await db.championship_matches.find({
+        "championship_id": championship_id,
+        "stage": current_stage
+    }, {"_id": 0}).to_list(None)
+    
+    winners = []
+    for match in current_matches:
+        if match.get("winner_id"):
+            winner = await db.championship_participants.find_one({"id": match["winner_id"]}, {"_id": 0})
+            if winner:
+                winners.append(winner)
+    
+    if len(winners) < 2:
+        # Championship complete - only one winner
+        await db.championships.update_one(
+            {"id": championship_id},
+            {"$set": {"status": "completed", "current_stage": "completed"}}
+        )
+        return {"message": "Championship completed!", "winner": winners[0]["name"] if winners else None}
+    
+    # Determine next round name
+    if len(winners) == 2:
+        next_round = "final"
+    elif len(winners) <= 4:
+        next_round = "knockout_semi"
+    elif len(winners) <= 8:
+        next_round = "knockout_quarter"
+    else:
+        # Increment round number
+        if current_stage.startswith("knockout_round_"):
+            current_round_num = int(current_stage.split("_")[-1])
+            next_round = f"knockout_round_{current_round_num + 1}"
+        else:
+            next_round = "knockout_round_2"
+    
+    # Generate new access token
+    next_access_token = secrets.token_urlsafe(32)
+    
+    # Generate next round matches
+    all_rinks = [("A", i) for i in range(1, 7)] + [("B", i) for i in range(1, 7)]
+    created_matches = []
+    
+    for i in range(0, len(winners), 2):
+        if i + 1 >= len(winners):
+            break
+        
+        p1 = winners[i]
+        p2 = winners[i + 1]
+        rink = all_rinks[(i // 2) % len(all_rinks)]
+        
+        match_id = str(uuid.uuid4())
+        match_doc = {
+            "id": match_id,
+            "championship_id": championship_id,
+            "section_id": None,
+            "stage": next_round,
+            "bracket_position": i // 2,
+            "participant1_id": p1["id"],
+            "participant2_id": p2["id"],
+            "participant1_name": p1["name"],
+            "participant2_name": p2["name"],
+            "participant1_shots": None,
+            "participant2_shots": None,
+            "winner_id": None,
+            "is_draw": False,
+            "green": rink[0],
+            "rink": rink[1],
+            "scores_entered": False,
+            "verified": False,
+            "verified_by": None,
+            "verified_at": None,
+            "status": "pending",
+            "access_token": next_access_token
+        }
+        await db.championship_matches.insert_one(match_doc)
+        created_matches.append(match_doc)
+    
+    # Update championship
+    await db.championships.update_one(
+        {"id": championship_id},
+        {"$set": {"current_stage": next_round}}
+    )
+    
+    return {
+        "message": f"Advanced to {next_round}",
+        "round_name": next_round,
+        "matches": [ChampionshipMatch(**m) for m in created_matches],
+        "access_token": next_access_token
+    }
+
+@api_router.post("/championships/{championship_id}/manual-knockout-entry")
+async def manual_knockout_entry(
+    championship_id: str, 
+    entries: List[KnockoutBracketEntry], 
+    current_user: User = Depends(get_current_user)
+):
+    """Manually enter knockout bracket for knockout-only championships"""
+    import uuid
+    
+    # Verify access
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    if championship.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if championship.get("start_type") != "knockout":
+        raise HTTPException(status_code=400, detail="This championship has round-robin stage. Use upload instead.")
+    
+    if len(entries) < 1:
+        raise HTTPException(status_code=400, detail="At least one match is required")
+    
+    # Clear existing data
+    await db.championship_sections.delete_many({"championship_id": championship_id})
+    await db.championship_participants.delete_many({"championship_id": championship_id})
+    await db.championship_matches.delete_many({"championship_id": championship_id})
+    
+    # Create a single "knockout" section
+    section_id = str(uuid.uuid4())
+    await db.championship_sections.insert_one({
+        "id": section_id,
+        "championship_id": championship_id,
+        "name": "Knockout",
+        "status": "in_progress"
+    })
+    
+    # Create participants and matches
+    participants_map = {}
+    knockout_access_token = secrets.token_urlsafe(32)
+    all_rinks = [("A", i) for i in range(1, 7)] + [("B", i) for i in range(1, 7)]
+    
+    # Determine round name
+    num_matches = len(entries)
+    if num_matches == 1:
+        round_name = "final"
+    elif num_matches <= 2:
+        round_name = "knockout_semi"
+    elif num_matches <= 4:
+        round_name = "knockout_quarter"
+    else:
+        round_name = "knockout_round_1"
+    
+    created_matches = []
+    
+    for i, entry in enumerate(entries):
+        # Create participants if not exists
+        for name in [entry.participant1_name, entry.participant2_name]:
+            if name not in participants_map:
+                participant_id = str(uuid.uuid4())
+                participant_doc = {
+                    "id": participant_id,
+                    "championship_id": championship_id,
+                    "section_id": section_id,
+                    "name": name,
+                    "matches_played": 0,
+                    "wins": 0,
+                    "draws": 0,
+                    "losses": 0,
+                    "points": 0,
+                    "shots_for": 0,
+                    "shots_against": 0,
+                    "shot_difference": 0,
+                    "eliminated": False,
+                    "knockout_seed": len(participants_map) + 1
+                }
+                await db.championship_participants.insert_one(participant_doc)
+                participants_map[name] = participant_doc
+        
+        # Create match
+        p1 = participants_map[entry.participant1_name]
+        p2 = participants_map[entry.participant2_name]
+        rink = all_rinks[i % len(all_rinks)]
+        
+        match_id = str(uuid.uuid4())
+        match_doc = {
+            "id": match_id,
+            "championship_id": championship_id,
+            "section_id": None,
+            "stage": round_name,
+            "bracket_position": i,
+            "participant1_id": p1["id"],
+            "participant2_id": p2["id"],
+            "participant1_name": p1["name"],
+            "participant2_name": p2["name"],
+            "participant1_shots": None,
+            "participant2_shots": None,
+            "winner_id": None,
+            "is_draw": False,
+            "green": rink[0],
+            "rink": rink[1],
+            "scores_entered": False,
+            "verified": False,
+            "verified_by": None,
+            "verified_at": None,
+            "status": "pending",
+            "access_token": knockout_access_token
+        }
+        await db.championship_matches.insert_one(match_doc)
+        created_matches.append(match_doc)
+    
+    # Update championship status
+    await db.championships.update_one(
+        {"id": championship_id},
+        {"$set": {"status": "knockout", "current_stage": round_name}}
+    )
+    
+    return {
+        "message": f"Created {len(created_matches)} knockout matches",
+        "round_name": round_name,
+        "matches": [ChampionshipMatch(**m) for m in created_matches],
+        "participants": list(participants_map.keys()),
+        "access_token": knockout_access_token
+    }
+
+@api_router.get("/public/championships/{championship_id}/standings")
+async def get_public_championship_standings(championship_id: str):
+    """Get public standings for a championship"""
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    
+    sections = await db.championship_sections.find({"championship_id": championship_id}, {"_id": 0}).to_list(None)
+    
+    result = {
+        "championship": Championship(**championship),
+        "sections": []
+    }
+    
+    for section in sections:
+        participants = await db.championship_participants.find(
+            {"championship_id": championship_id, "section_id": section["id"]},
+            {"_id": 0}
+        ).to_list(None)
+        
+        # Sort by: points (desc), shot_difference (desc), shots_for (desc)
+        sorted_participants = sorted(participants, key=lambda p: (
+            -p.get("points", 0),
+            -p.get("shot_difference", 0),
+            -p.get("shots_for", 0)
+        ))
+        
+        result["sections"].append({
+            "section": ChampionshipSection(**section),
+            "standings": [ChampionshipParticipant(**p) for p in sorted_participants]
+        })
+    
+    return result
+
+@api_router.get("/public/championships/{championship_id}/bracket")
+async def get_public_championship_bracket(championship_id: str):
+    """Get knockout bracket for a championship"""
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    
+    # Get all knockout matches
+    matches = await db.championship_matches.find({
+        "championship_id": championship_id,
+        "stage": {"$ne": "round_robin"}
+    }, {"_id": 0}).to_list(None)
+    
+    # Group by stage
+    bracket = {}
+    for match in matches:
+        stage = match.get("stage", "unknown")
+        if stage not in bracket:
+            bracket[stage] = []
+        bracket[stage].append(ChampionshipMatch(**match))
+    
+    return {
+        "championship": Championship(**championship),
+        "bracket": bracket
+    }
+
 app.include_router(api_router)
 
 app.add_middleware(
