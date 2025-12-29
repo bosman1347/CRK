@@ -2061,6 +2061,48 @@ async def get_public_championship_bracket(championship_id: str):
         "bracket": bracket
     }
 
+# ==================== DELETE ROUTES (Without Archive) ====================
+
+@api_router.delete("/tournaments/{tournament_id}")
+async def delete_tournament(tournament_id: str, current_user: User = Depends(get_current_user)):
+    """Delete a tournament permanently without archiving"""
+    # Get tournament
+    tournament = await db.tournaments.find_one({"id": tournament_id}, {"_id": 0})
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    
+    # Verify ownership
+    if tournament.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied - must be tournament creator")
+    
+    # Delete all related data
+    await db.matches.delete_many({"tournament_id": tournament_id})
+    await db.rounds.delete_many({"tournament_id": tournament_id})
+    await db.teams.delete_many({"tournament_id": tournament_id})
+    await db.tournaments.delete_one({"id": tournament_id})
+    
+    return {"message": "Tournament deleted successfully"}
+
+@api_router.delete("/championships/{championship_id}")
+async def delete_championship(championship_id: str, current_user: User = Depends(get_current_user)):
+    """Delete a championship permanently without archiving"""
+    # Get championship
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    
+    # Verify ownership
+    if championship.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied - must be championship creator")
+    
+    # Delete all related data
+    await db.championship_matches.delete_many({"championship_id": championship_id})
+    await db.championship_participants.delete_many({"championship_id": championship_id})
+    await db.championship_sections.delete_many({"championship_id": championship_id})
+    await db.championships.delete_one({"id": championship_id})
+    
+    return {"message": "Championship deleted successfully"}
+
 # ==================== ARCHIVE ROUTES ====================
 
 @api_router.post("/tournaments/{tournament_id}/archive")
