@@ -2061,6 +2061,294 @@ async def get_public_championship_bracket(championship_id: str):
         "bracket": bracket
     }
 
+# ==================== ARCHIVE ROUTES ====================
+
+@api_router.post("/tournaments/{tournament_id}/archive")
+async def archive_tournament(tournament_id: str, current_user: User = Depends(get_current_user)):
+    """Archive a completed tournament and delete original data"""
+    import uuid
+    from dateutil.relativedelta import relativedelta
+    
+    # Get tournament
+    tournament = await db.tournaments.find_one({"id": tournament_id}, {"_id": 0})
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    
+    # Verify ownership
+    if tournament.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied - must be tournament creator")
+    
+    # Get teams for standings
+    teams = await db.teams.find({"tournament_id": tournament_id}, {"_id": 0}).to_list(None)
+    
+    # Sort teams by points/standings
+    tournament_type = tournament.get("type", "skins")
+    if tournament_type == "standard":
+        sorted_teams = sorted(teams, key=lambda t: (
+            -t.get("match_points", 0),
+            -t.get("shots_for", 0) + t.get("shots_against", 0),
+            -t.get("shots_for", 0)
+        ))
+    else:
+        sorted_teams = sorted(teams, key=lambda t: -t.get("total_points", 0))
+    
+    # Determine winner and runner-up
+    winner = sorted_teams[0]["name"] if len(sorted_teams) > 0 else "N/A"
+    runner_up = sorted_teams[1]["name"] if len(sorted_teams) > 1 else "N/A"
+    
+    # Get final scores
+    final_score = ""
+    if len(sorted_teams) >= 2:
+        if tournament_type == "standard":
+            final_score = f"{sorted_teams[0].get('match_points', 0)} - {sorted_teams[1].get('match_points', 0)} (Match Points)"
+        else:
+            final_score = f"{sorted_teams[0].get('total_points', 0)} - {sorted_teams[1].get('total_points', 0)} (Skin Points)"
+    
+    # Build final standings
+    final_standings = []
+    for i, team in enumerate(sorted_teams):
+        standing = {
+            "position": i + 1,
+            "name": team["name"],
+            "points": team.get("match_points", 0) if tournament_type == "standard" else team.get("total_points", 0),
+            "shots_for": team.get("shots_for", 0),
+            "shots_against": team.get("shots_against", 0)
+        }
+        final_standings.append(standing)
+    
+    # Create archive record
+    archive_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    expires_at = now + relativedelta(years=2)
+    
+    archive_doc = {
+        "id": archive_id,
+        "original_id": tournament_id,
+        "name": tournament["name"],
+        "type": tournament_type,
+        "competition_type": None,
+        "gender_category": None,
+        "winner": winner,
+        "runner_up": runner_up,
+        "final_score": final_score,
+        "participants": [t["name"] for t in teams],
+        "final_standings": final_standings,
+        "archived_at": now.isoformat(),
+        "expires_at": expires_at.isoformat(),
+        "archived_by": current_user.id
+    }
+    
+    await db.archived_tournaments.insert_one(archive_doc)
+    
+    # Delete original tournament data
+    await db.matches.delete_many({"tournament_id": tournament_id})
+    await db.rounds.delete_many({"tournament_id": tournament_id})
+    await db.teams.delete_many({"tournament_id": tournament_id})
+    await db.tournaments.delete_one({"id": tournament_id})
+    
+    return {"message": "Tournament archived successfully", "archive_id": archive_id}
+
+@api_router.post("/championships/{championship_id}/archive")
+async def archive_championship(championship_id: str, current_user: User = Depends(get_current_user)):
+    """Archive a completed championship and delete original data"""
+    import uuid
+    from dateutil.relativedelta import relativedelta
+    
+    # Get championship
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    
+    # Verify ownership
+    if championship.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied - must be championship creator")
+    
+    # Get participants
+    participants = await db.championship_participants.find(
+        {"championship_id": championship_id}, 
+        {"_id": 0}
+    ).to_list(None)
+    
+    # Get final match to determine winner
+    final_match = await db.championship_matches.find_one(
+        {"championship_id": championship_id, "stage": "final", "verified": True},
+        {"_id": 0}
+    )
+    
+    winner = "N/A"
+    runner_up = "N/A"
+    final_score = "N/A"
+    
+    if final_match:
+        if final_match.get("winner_id") == final_match.get("participant1_id"):
+            winner = final_match["participant1_name"]
+            runner_up = final_match["participant2_name"]
+        else:
+            winner = final_match["participant2_name"]
+            runner_up = final_match["participant1_name"]
+        final_score = f"{final_match.get('participant1_shots', 0)} - {final_match.get('participant2_shots', 0)}"
+    
+    # Build final standings (for round robin sections)
+    final_standings = []
+    sections = await db.championship_sections.find({"championship_id": championship_id}, {"_id": 0}).to_list(None)
+    
+    for section in sections:
+        section_participants = [p for p in participants if p.get("section_id") == section["id"]]
+        sorted_participants = sorted(section_participants, key=lambda p: (
+            -p.get("points", 0),
+            -p.get("shot_difference", 0),
+            -p.get("shots_for", 0)
+        ))
+        
+        for i, p in enumerate(sorted_participants):
+            final_standings.append({
+                "position": i + 1,
+                "section": section["name"],
+                "name": p["name"],
+                "points": p.get("points", 0),
+                "wins": p.get("wins", 0),
+                "draws": p.get("draws", 0),
+                "losses": p.get("losses", 0),
+                "shots_for": p.get("shots_for", 0),
+                "shots_against": p.get("shots_against", 0)
+            })
+    
+    # Create archive record
+    archive_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    expires_at = now + relativedelta(years=2)
+    
+    archive_doc = {
+        "id": archive_id,
+        "original_id": championship_id,
+        "name": championship["name"],
+        "type": "championship",
+        "competition_type": championship.get("competition_type"),
+        "gender_category": championship.get("gender_category"),
+        "winner": winner,
+        "runner_up": runner_up,
+        "final_score": final_score,
+        "participants": [p["name"] for p in participants],
+        "final_standings": final_standings,
+        "archived_at": now.isoformat(),
+        "expires_at": expires_at.isoformat(),
+        "archived_by": current_user.id
+    }
+    
+    await db.archived_tournaments.insert_one(archive_doc)
+    
+    # Delete original championship data
+    await db.championship_matches.delete_many({"championship_id": championship_id})
+    await db.championship_participants.delete_many({"championship_id": championship_id})
+    await db.championship_sections.delete_many({"championship_id": championship_id})
+    await db.championships.delete_one({"id": championship_id})
+    
+    return {"message": "Championship archived successfully", "archive_id": archive_id}
+
+@api_router.get("/archives")
+async def get_archived_tournaments(current_user: User = Depends(get_current_user)):
+    """Get all archived tournaments for the current user"""
+    archives = await db.archived_tournaments.find(
+        {"archived_by": current_user.id}, 
+        {"_id": 0}
+    ).sort("archived_at", -1).to_list(None)
+    
+    return [ArchivedTournament(**a) for a in archives]
+
+@api_router.get("/archives/{archive_id}")
+async def get_archived_tournament(archive_id: str, current_user: User = Depends(get_current_user)):
+    """Get a specific archived tournament"""
+    archive = await db.archived_tournaments.find_one({"id": archive_id}, {"_id": 0})
+    if not archive:
+        raise HTTPException(status_code=404, detail="Archive not found")
+    
+    return ArchivedTournament(**archive)
+
+@api_router.get("/archives/{archive_id}/download")
+async def download_archived_tournament(archive_id: str, current_user: User = Depends(get_current_user)):
+    """Get archived tournament data in downloadable format"""
+    archive = await db.archived_tournaments.find_one({"id": archive_id}, {"_id": 0})
+    if not archive:
+        raise HTTPException(status_code=404, detail="Archive not found")
+    
+    # Return data formatted for CSV download
+    csv_data = []
+    csv_data.append(["Tournament/Championship Results"])
+    csv_data.append(["Name", archive["name"]])
+    csv_data.append(["Type", archive.get("type", "N/A")])
+    if archive.get("competition_type"):
+        csv_data.append(["Competition", archive["competition_type"]])
+    if archive.get("gender_category"):
+        csv_data.append(["Category", archive["gender_category"]])
+    csv_data.append(["Winner", archive["winner"]])
+    csv_data.append(["Runner-up", archive["runner_up"]])
+    csv_data.append(["Final Score", archive["final_score"]])
+    csv_data.append(["Archived", archive["archived_at"][:10]])
+    csv_data.append([])
+    csv_data.append(["Final Standings"])
+    
+    standings = archive.get("final_standings", [])
+    if standings:
+        # Determine headers based on type
+        if archive.get("type") == "championship":
+            csv_data.append(["Position", "Section", "Name", "Points", "W", "D", "L", "SF", "SA"])
+            for s in standings:
+                csv_data.append([
+                    s.get("position", ""),
+                    s.get("section", ""),
+                    s.get("name", ""),
+                    s.get("points", 0),
+                    s.get("wins", 0),
+                    s.get("draws", 0),
+                    s.get("losses", 0),
+                    s.get("shots_for", 0),
+                    s.get("shots_against", 0)
+                ])
+        else:
+            csv_data.append(["Position", "Name", "Points", "Shots For", "Shots Against"])
+            for s in standings:
+                csv_data.append([
+                    s.get("position", ""),
+                    s.get("name", ""),
+                    s.get("points", 0),
+                    s.get("shots_for", 0),
+                    s.get("shots_against", 0)
+                ])
+    
+    csv_data.append([])
+    csv_data.append(["Participants"])
+    for p in archive.get("participants", []):
+        csv_data.append([p])
+    
+    return {"csv_data": csv_data, "filename": f"{archive['name'].replace(' ', '_')}_results.csv"}
+
+@api_router.delete("/archives/{archive_id}")
+async def delete_archived_tournament(archive_id: str, current_user: User = Depends(get_current_user)):
+    """Manually delete an archived tournament"""
+    archive = await db.archived_tournaments.find_one({"id": archive_id}, {"_id": 0})
+    if not archive:
+        raise HTTPException(status_code=404, detail="Archive not found")
+    
+    if archive.get("archived_by") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    await db.archived_tournaments.delete_one({"id": archive_id})
+    
+    return {"message": "Archive deleted successfully"}
+
+# Cleanup expired archives (should be called periodically)
+@api_router.post("/archives/cleanup-expired")
+async def cleanup_expired_archives(current_user: User = Depends(get_current_user)):
+    """Delete archives older than 2 years"""
+    now = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.archived_tournaments.delete_many({
+        "archived_by": current_user.id,
+        "expires_at": {"$lt": now}
+    })
+    
+    return {"message": f"Deleted {result.deleted_count} expired archives"}
+
 app.include_router(api_router)
 
 app.add_middleware(
