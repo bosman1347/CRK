@@ -128,7 +128,8 @@ class LawnBowlsAPITester:
         """Test creating tournament with 4 teams"""
         tournament_data = {
             "name": "Test Tournament 4 Teams",
-            "teams": ["Team Alpha", "Team Beta", "Team Gamma", "Team Delta"]
+            "teams": ["Team Alpha", "Team Beta", "Team Gamma", "Team Delta"],
+            "umpire_email": "umpire@example.com"
         }
         
         success, response = self.run_test(
@@ -139,8 +140,8 @@ class LawnBowlsAPITester:
             data=tournament_data
         )
         
-        if success and 'id' in response:
-            self.tournament_id = response['id']
+        if success and 'tournament' in response:
+            self.tournament_id = response['tournament']['id']
             print(f"   Tournament ID: {self.tournament_id}")
             return True
         return False
