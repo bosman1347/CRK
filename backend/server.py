@@ -1409,16 +1409,18 @@ async def get_championship_access_token(championship_id: str, current_user: User
     if championship.get("creator_id") != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
     
-    # Get any match with access token
+    current_stage = championship.get("current_stage", "setup")
+    
+    # Get match with access token from current stage
     match = await db.championship_matches.find_one(
-        {"championship_id": championship_id, "access_token": {"$ne": None}},
+        {"championship_id": championship_id, "stage": current_stage, "access_token": {"$ne": None}},
         {"_id": 0, "access_token": 1}
     )
     
     if not match:
         raise HTTPException(status_code=404, detail="No active stage found")
     
-    return {"access_token": match["access_token"]}
+    return {"access_token": match["access_token"], "stage": current_stage}
 
 # Public championship score entry routes (via access token)
 @api_router.get("/championship-round/{access_token}")
