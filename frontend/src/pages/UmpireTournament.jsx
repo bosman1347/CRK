@@ -375,6 +375,16 @@ const UmpireTournament = () => {
                   </Button>
                 </>
               )}
+              {tournament.current_round >= maxRounds && allMatchesVerified && (
+                <Button
+                  onClick={() => setShowArchiveDialog(true)}
+                  variant="outline"
+                  className="bg-amber-500/20 text-white border-amber-300/50 hover:bg-amber-500/30"
+                >
+                  <Archive className="w-4 h-4 mr-2" />
+                  Archive Tournament
+                </Button>
+              )}
               {tournament.current_round === 0 || canGenerateNextRound ? (
                 <Button
                   onClick={generateRound}
