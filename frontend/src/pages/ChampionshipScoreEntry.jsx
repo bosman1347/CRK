@@ -202,16 +202,16 @@ const ChampionshipScoreEntry = () => {
         ))}
 
         {/* Knockout Matches */}
-        {championship.current_stage !== 'round_robin' && knockoutMatches.length > 0 && (
+        {hasKnockoutMatches && (
           <Card className="floating-card">
             <CardHeader>
               <CardTitle className="text-base capitalize">
-                {championship.current_stage.replace(/_/g, ' ')}
+                {knockoutMatches[0]?.stage?.replace(/_/g, ' ') || 'Knockout'}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {knockoutMatches.filter(m => m.stage === championship.current_stage).map(match => (
+                {knockoutMatches.map(match => (
                   <button
                     key={match.id}
                     onClick={() => !match.verified && openScoreDialog(match)}
