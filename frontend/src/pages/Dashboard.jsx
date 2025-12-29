@@ -330,40 +330,67 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, type: null, item: null })}>
+      {/* Delete/Archive Confirmation Dialog */}
+      <Dialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, type: null, item: null, action: null })}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete {deleteDialog.type === 'tournament' ? 'Tournament' : 'Championship'}?</DialogTitle>
+            <DialogTitle>
+              {deleteDialog.action === 'archive' ? 'Archive' : 'Delete'} {deleteDialog.type === 'tournament' ? 'Tournament' : 'Championship'}?
+            </DialogTitle>
             <DialogDescription>
-              Are you sure you want to permanently delete "{deleteDialog.item?.name}"? 
-              This will remove all matches, scores, and participant data. This action cannot be undone.
+              {deleteDialog.action === 'archive' 
+                ? `Archive "${deleteDialog.item?.name}"? The results will be saved and the original data will be removed.`
+                : `Permanently delete "${deleteDialog.item?.name}"? This will remove all data and cannot be undone.`
+              }
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-800">
-                <strong>Warning:</strong> This is permanent deletion without archiving. 
-                If you want to keep the results, use the "Archive" feature instead.
-              </p>
-            </div>
+            {deleteDialog.action === 'archive' ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm text-amber-800 font-medium mb-2">What gets saved:</p>
+                <ul className="text-sm text-amber-700 list-disc list-inside">
+                  <li>Tournament/Championship name</li>
+                  <li>Winner & Runner-up</li>
+                  <li>Final scores and standings</li>
+                  <li>All participant names</li>
+                </ul>
+                <p className="text-xs text-amber-600 mt-2">Archives are kept for 2 years.</p>
+              </div>
+            ) : (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-800">
+                  <strong>Warning:</strong> This is permanent deletion. All matches, scores, and participant data will be lost. 
+                  If you want to keep the results, click Cancel and use the Archive (📁) button instead.
+                </p>
+              </div>
+            )}
           </div>
           <div className="flex gap-3">
             <Button 
               variant="outline" 
-              onClick={() => setDeleteDialog({ open: false, type: null, item: null })} 
+              onClick={() => setDeleteDialog({ open: false, type: null, item: null, action: null })} 
               className="flex-1"
             >
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleDelete} 
-              className="flex-1"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete Permanently
-            </Button>
+            {deleteDialog.action === 'archive' ? (
+              <Button 
+                onClick={handleArchive} 
+                className="flex-1 bg-amber-500 hover:bg-amber-600"
+              >
+                <Archive className="w-4 h-4 mr-2" />
+                Archive & Remove
+              </Button>
+            ) : (
+              <Button 
+                variant="destructive" 
+                onClick={handleDelete} 
+                className="flex-1"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Permanently
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
