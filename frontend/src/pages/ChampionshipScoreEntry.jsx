@@ -146,7 +146,7 @@ const ChampionshipScoreEntry = () => {
         </Card>
 
         {/* Round Robin Matches by Section */}
-        {championship.current_stage === 'round_robin' && sections.map(section => (
+        {hasRoundRobinMatches && sections.map(section => (
           <Card key={section.id} className="mb-6 floating-card">
             <CardHeader>
               <CardTitle className="text-base">Section {section.name}</CardTitle>
