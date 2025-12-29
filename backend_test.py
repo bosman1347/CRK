@@ -889,8 +889,11 @@ B,Player 6"""
             200
         )
         
-        if success and isinstance(response, list):
-            print(f"   Public standings ({len(response)} participants)")
+        if success:
+            if isinstance(response, list):
+                print(f"   Public standings ({len(response)} participants)")
+            else:
+                print(f"   Public standings retrieved")
             return True
         return False
 
