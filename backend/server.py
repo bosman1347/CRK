@@ -1798,6 +1798,7 @@ async def generate_knockout_bracket(championship_id: str, current_user: User = D
 async def advance_knockout_round(championship_id: str, current_user: User = Depends(get_current_user)):
     """Advance to the next knockout round after current matches are verified"""
     import uuid
+    import math
     
     # Verify access
     championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
@@ -1836,20 +1837,35 @@ async def advance_knockout_round(championship_id: str, current_user: User = Depe
             if winner:
                 winners.append(winner)
     
-    if len(winners) < 2:
+    # Add BYE participants from previous round
+    bye_participant_ids = championship.get("bye_participant_ids", [])
+    for bye_id in bye_participant_ids:
+        bye_participant = await db.championship_participants.find_one({"id": bye_id}, {"_id": 0})
+        if bye_participant and bye_participant not in winners:
+            winners.append(bye_participant)
+            logging.info(f"Adding BYE participant to next round: {bye_participant['name']}")
+    
+    total_next_round = len(winners)
+    logging.info(f"Advancing knockout: {total_next_round} participants for next round")
+    
+    if total_next_round < 2:
         # Championship complete - only one winner
         await db.championships.update_one(
             {"id": championship_id},
-            {"$set": {"status": "completed", "current_stage": "completed"}}
+            {"$set": {"status": "completed", "current_stage": "completed", "bye_participant_ids": []}}
         )
         return {"message": "Championship completed!", "winner": winners[0]["name"] if winners else None}
     
-    # Determine next round name
-    if len(winners) == 2:
+    # Calculate new bracket size and BYEs for next round
+    bracket_size = 2 ** math.ceil(math.log2(total_next_round))
+    num_byes = bracket_size - total_next_round
+    
+    # Determine next round name based on bracket size
+    if bracket_size == 2:
         next_round = "final"
-    elif len(winners) <= 4:
+    elif bracket_size == 4:
         next_round = "knockout_semi"
-    elif len(winners) <= 8:
+    elif bracket_size == 8:
         next_round = "knockout_quarter"
     else:
         # Increment round number
@@ -1862,16 +1878,23 @@ async def advance_knockout_round(championship_id: str, current_user: User = Depe
     # Generate new access token
     next_access_token = secrets.token_urlsafe(32)
     
+    # Sort winners (BYE participants first as they're higher seeded)
+    # Then split into BYE and playing participants
+    bye_participants = winners[:num_byes]
+    playing_participants = winners[num_byes:]
+    
     # Generate next round matches
     all_rinks = [("A", i) for i in range(1, 7)] + [("B", i) for i in range(1, 7)]
     created_matches = []
     
-    for i in range(0, len(winners), 2):
-        if i + 1 >= len(winners):
-            break
+    for i in range(0, len(playing_participants), 2):
+        if i + 1 >= len(playing_participants):
+            # Odd participant gets BYE
+            bye_participants.append(playing_participants[i])
+            continue
         
-        p1 = winners[i]
-        p2 = winners[i + 1]
+        p1 = playing_participants[i]
+        p2 = playing_participants[i + 1]
         rink = all_rinks[(i // 2) % len(all_rinks)]
         
         match_id = str(uuid.uuid4())
