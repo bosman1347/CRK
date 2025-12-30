@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Trophy, Crown } from 'lucide-react';
+import { Trophy, Crown, FastForward } from 'lucide-react';
 
-const KnockoutBracket = ({ matches, championship }) => {
+const KnockoutBracket = ({ matches, championship, byeParticipants = [] }) => {
   // Group matches by stage
   const stages = {};
   matches.forEach(match => {
@@ -39,7 +39,7 @@ const KnockoutBracket = ({ matches, championship }) => {
 
   const winner = getWinner();
 
-  if (matches.length === 0) {
+  if (matches.length === 0 && byeParticipants.length === 0) {
     return (
       <Card className="floating-card border-stone-200">
         <CardContent className="py-12 text-center">
@@ -60,6 +60,28 @@ const KnockoutBracket = ({ matches, championship }) => {
             <Trophy className="w-12 h-12 text-amber-500 mx-auto mb-3" />
             <h2 className="text-2xl font-heading text-amber-800">Champion</h2>
             <p className="text-3xl font-bold text-amber-900 mt-2">{winner}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* BYE Participants Banner */}
+      {byeParticipants.length > 0 && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3 mb-3">
+              <FastForward className="w-5 h-5 text-blue-600" />
+              <h4 className="font-semibold text-blue-800">Advances Automatically</h4>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {byeParticipants.map((p, idx) => (
+                <Badge key={p.id || idx} className="bg-blue-100 text-blue-700 px-3 py-1">
+                  {p.name}
+                </Badge>
+              ))}
+            </div>
+            <p className="text-xs text-blue-600 mt-2">
+              These participants advance to the next round based on their round-robin performance
+            </p>
           </CardContent>
         </Card>
       )}
