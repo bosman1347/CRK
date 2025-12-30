@@ -1784,7 +1784,7 @@ async def generate_knockout_bracket(championship_id: str, current_user: User = D
     
     bye_message = ""
     if bye_participants:
-        bye_message = f" ({len(bye_participants)} BYE: {', '.join(bye_names)} advance to next round)"
+        bye_message = f" ({len(bye_participants)} advance automatically: {', '.join(bye_names)})"
     
     return {
         "message": f"Generated {len(created_matches)} knockout matches{bye_message}",
@@ -1924,17 +1924,26 @@ async def advance_knockout_round(championship_id: str, current_user: User = Depe
         await db.championship_matches.insert_one(match_doc)
         created_matches.append(match_doc)
     
+    # Store BYE participants for the next round
+    bye_ids = [p["id"] for p in bye_participants]
+    bye_names = [p["name"] for p in bye_participants]
+    
     # Update championship
     await db.championships.update_one(
         {"id": championship_id},
-        {"$set": {"current_stage": next_round}}
+        {"$set": {"current_stage": next_round, "bye_participant_ids": bye_ids}}
     )
     
+    bye_message = ""
+    if bye_participants:
+        bye_message = f" ({len(bye_participants)} advance automatically: {', '.join(bye_names)})"
+    
     return {
-        "message": f"Advanced to {next_round}",
+        "message": f"Advanced to {next_round}{bye_message}",
         "round_name": next_round,
         "matches": [ChampionshipMatch(**m) for m in created_matches],
-        "access_token": next_access_token
+        "access_token": next_access_token,
+        "bye_participants": bye_names
     }
 
 @api_router.post("/championships/{championship_id}/manual-knockout-entry")
