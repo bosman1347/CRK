@@ -606,7 +606,7 @@ const ChampionshipManage = () => {
             </TabsContent>
 
             <TabsContent value="bracket">
-              <KnockoutBracket matches={knockoutMatches} championship={championship} />
+              <KnockoutBracket matches={knockoutMatches} championship={championship} byeParticipants={byeParticipants} />
             </TabsContent>
           </Tabs>
         )}
