@@ -25,6 +25,7 @@ const ChampionshipManage = () => {
   const [sections, setSections] = useState([]);
   const [participants, setParticipants] = useState([]);
   const [matches, setMatches] = useState([]);
+  const [byeParticipants, setByeParticipants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [accessToken, setAccessToken] = useState(null);
   const [verifyingMatch, setVerifyingMatch] = useState(null);
