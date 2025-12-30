@@ -2152,9 +2152,22 @@ async def get_public_championship_bracket(championship_id: str):
             bracket[stage] = []
         bracket[stage].append(ChampionshipMatch(**match))
     
+    # Get BYE participants
+    bye_ids = championship.get("bye_participant_ids", [])
+    bye_participants = []
+    for bye_id in bye_ids:
+        participant = await db.championship_participants.find_one({"id": bye_id}, {"_id": 0})
+        if participant:
+            bye_participants.append({
+                "id": participant["id"],
+                "name": participant["name"],
+                "status": "Advances automatically"
+            })
+    
     return {
         "championship": Championship(**championship),
-        "bracket": bracket
+        "bracket": bracket,
+        "bye_participants": bye_participants
     }
 
 # ==================== DELETE ROUTES (Without Archive) ====================
