@@ -17,6 +17,7 @@ const PublicChampionshipStandings = () => {
   const [championship, setChampionship] = useState(null);
   const [sections, setSections] = useState([]);
   const [bracket, setBracket] = useState({});
+  const [byeParticipants, setByeParticipants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -34,6 +35,7 @@ const PublicChampionshipStandings = () => {
       setChampionship(standingsRes.data.championship);
       setSections(standingsRes.data.sections);
       setBracket(bracketRes.data.bracket);
+      setByeParticipants(bracketRes.data.bye_participants || []);
     } catch (error) {
       toast.error('Failed to load championship data');
     } finally {
