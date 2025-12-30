@@ -65,6 +65,17 @@ const ChampionshipManage = () => {
           setAccessToken(currentStageMatch.access_token);
         }
       }
+      
+      // Fetch BYE participants if in knockout stage
+      if (champRes.data.status === 'knockout') {
+        try {
+          const byeRes = await axios.get(`${API}/championships/${id}/bye-participants`, { headers: getAuthHeader() });
+          setByeParticipants(byeRes.data.bye_participants || []);
+        } catch (e) {
+          // BYE endpoint might not exist for older championships
+          setByeParticipants([]);
+        }
+      }
     } catch (error) {
       toast.error('Failed to load championship data');
     } finally {
