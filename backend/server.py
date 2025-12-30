@@ -1441,6 +1441,33 @@ async def get_championship_access_token(championship_id: str, current_user: User
     
     return {"access_token": match["access_token"], "stage": current_stage}
 
+@api_router.get("/championships/{championship_id}/bye-participants")
+async def get_bye_participants(championship_id: str, current_user: User = Depends(get_current_user)):
+    """Get the list of participants who have BYEs in the current knockout round"""
+    # Verify access
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    if championship.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    bye_ids = championship.get("bye_participant_ids", [])
+    bye_participants = []
+    
+    for bye_id in bye_ids:
+        participant = await db.championship_participants.find_one({"id": bye_id}, {"_id": 0})
+        if participant:
+            bye_participants.append({
+                "id": participant["id"],
+                "name": participant["name"],
+                "status": "Advances automatically"
+            })
+    
+    return {
+        "current_stage": championship.get("current_stage", "setup"),
+        "bye_participants": bye_participants
+    }
+
 # Public championship score entry routes (via access token)
 @api_router.get("/championship-round/{access_token}")
 async def get_championship_round_by_token(access_token: str):
