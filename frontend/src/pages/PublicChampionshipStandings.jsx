@@ -187,7 +187,7 @@ const PublicChampionshipStandings = () => {
               <Trophy className="w-5 h-5 text-amber-500" />
               Knockout Bracket
             </h2>
-            <KnockoutBracket matches={knockoutMatches} championship={championship} />
+            <KnockoutBracket matches={knockoutMatches} championship={championship} byeParticipants={byeParticipants} />
           </div>
         )}
       </div>
