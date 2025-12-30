@@ -1621,6 +1621,7 @@ async def verify_championship_match(
 async def generate_knockout_bracket(championship_id: str, current_user: User = Depends(get_current_user)):
     """Generate knockout bracket from round-robin winners or for knockout-only championship"""
     import uuid
+    import math
     
     # Verify access
     championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
@@ -1687,13 +1688,20 @@ async def generate_knockout_bracket(championship_id: str, current_user: User = D
     # Generate access token for knockout stage
     knockout_access_token = secrets.token_urlsafe(32)
     
-    # Determine knockout round name based on number of participants
     num_participants = len(knockout_participants)
-    if num_participants == 2:
+    
+    # Calculate bracket size - find next power of 2
+    bracket_size = 2 ** math.ceil(math.log2(num_participants))
+    num_byes = bracket_size - num_participants
+    
+    logging.info(f"Knockout: {num_participants} participants, bracket size {bracket_size}, {num_byes} BYEs")
+    
+    # Determine round name based on bracket size
+    if bracket_size == 2:
         round_name = "final"
-    elif num_participants <= 4:
+    elif bracket_size == 4:
         round_name = "knockout_semi"
-    elif num_participants <= 8:
+    elif bracket_size == 8:
         round_name = "knockout_quarter"
     else:
         round_name = "knockout_round_1"
@@ -1707,14 +1715,30 @@ async def generate_knockout_bracket(championship_id: str, current_user: User = D
         "stage": {"$ne": "round_robin"}
     })
     
+    # Arrange participants with BYEs
+    # Top seeds get BYEs (advance automatically to next round)
+    # Remaining participants play in first round
+    
+    # Sort by seed (knockout_seed was assigned based on section order)
+    knockout_participants.sort(key=lambda p: p.get("knockout_seed", 999))
+    
+    bye_participants = knockout_participants[:num_byes]  # These get BYEs
+    playing_participants = knockout_participants[num_byes:]  # These play first round
+    
+    logging.info(f"BYE participants: {[p['name'] for p in bye_participants]}")
+    logging.info(f"Playing participants: {[p['name'] for p in playing_participants]}")
+    
     created_matches = []
-    for i in range(0, len(knockout_participants), 2):
-        if i + 1 >= len(knockout_participants):
-            # Bye - participant advances automatically
-            break
+    
+    # Create matches for playing participants
+    for i in range(0, len(playing_participants), 2):
+        if i + 1 >= len(playing_participants):
+            # Odd player out - give them a BYE too
+            bye_participants.append(playing_participants[i])
+            continue
         
-        p1 = knockout_participants[i]
-        p2 = knockout_participants[i + 1]
+        p1 = playing_participants[i]
+        p2 = playing_participants[i + 1]
         rink = all_rinks[(i // 2) % len(all_rinks)]
         
         match_id = str(uuid.uuid4())
