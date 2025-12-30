@@ -1768,17 +1768,30 @@ async def generate_knockout_bracket(championship_id: str, current_user: User = D
         await db.championship_matches.insert_one(match_doc)
         created_matches.append(match_doc)
     
+    # Store BYE participants in championship for next round
+    bye_ids = [p["id"] for p in bye_participants]
+    bye_names = [p["name"] for p in bye_participants]
+    
     # Update championship status
     await db.championships.update_one(
         {"id": championship_id},
-        {"$set": {"status": "knockout", "current_stage": round_name}}
+        {"$set": {
+            "status": "knockout", 
+            "current_stage": round_name,
+            "bye_participant_ids": bye_ids
+        }}
     )
     
+    bye_message = ""
+    if bye_participants:
+        bye_message = f" ({len(bye_participants)} BYE: {', '.join(bye_names)} advance to next round)"
+    
     return {
-        "message": f"Generated {len(created_matches)} knockout matches",
+        "message": f"Generated {len(created_matches)} knockout matches{bye_message}",
         "round_name": round_name,
         "matches": [ChampionshipMatch(**m) for m in created_matches],
-        "access_token": knockout_access_token
+        "access_token": knockout_access_token,
+        "bye_participants": bye_names
     }
 
 @api_router.post("/championships/{championship_id}/advance-knockout")
