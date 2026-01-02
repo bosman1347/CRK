@@ -86,6 +86,11 @@ const Login = () => {
                 Register here
               </Link>
             </p>
+            <p className="text-center text-sm text-muted-foreground">
+              <Link to="/admin-reset" className="text-amber-600 hover:underline" data-testid="forgot-password-link">
+                Forgot password?
+              </Link>
+            </p>
           </form>
         </CardContent>
       </Card>
