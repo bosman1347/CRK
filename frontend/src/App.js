@@ -68,6 +68,8 @@ function AppRoutes() {
       <Route path="/championship-standings/:id" element={<PublicChampionshipStandings />} />
       {/* Archive route */}
       <Route path="/archives" element={<PrivateRoute><Archives /></PrivateRoute>} />
+      {/* Admin password reset */}
+      <Route path="/admin-reset" element={<AdminResetPassword />} />
     </Routes>
   );
 }
