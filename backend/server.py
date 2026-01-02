@@ -531,8 +531,8 @@ class AdminPasswordReset(BaseModel):
 
 @api_router.post("/auth/admin-reset-password")
 async def admin_reset_password(reset_data: AdminPasswordReset):
-    # Simple admin code for club use - can be changed
-    ADMIN_CODE = "CenturionBowls2025"
+    # Admin code from environment variable
+    ADMIN_CODE = os.environ.get('ADMIN_CODE', 'CenturionBowls2025')
     
     if reset_data.admin_code != ADMIN_CODE:
         raise HTTPException(status_code=403, detail="Invalid admin code")
