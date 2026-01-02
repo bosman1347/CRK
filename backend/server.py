@@ -523,6 +523,32 @@ async def change_password(password_data: ChangePassword, current_user: User = De
     
     return {"message": "Password changed successfully"}
 
+# Admin password reset (no auth required - uses admin code)
+class AdminPasswordReset(BaseModel):
+    email: EmailStr
+    new_password: str
+    admin_code: str
+
+@api_router.post("/auth/admin-reset-password")
+async def admin_reset_password(reset_data: AdminPasswordReset):
+    # Simple admin code for club use - can be changed
+    ADMIN_CODE = "CenturionBowls2025"
+    
+    if reset_data.admin_code != ADMIN_CODE:
+        raise HTTPException(status_code=403, detail="Invalid admin code")
+    
+    user = await db.users.find_one({"email": reset_data.email}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    new_hash = get_password_hash(reset_data.new_password)
+    await db.users.update_one(
+        {"email": reset_data.email},
+        {"$set": {"password_hash": new_hash}}
+    )
+    
+    return {"message": f"Password reset successfully for {reset_data.email}"}
+
 # Tournament routes
 @api_router.post("/tournaments")
 async def create_tournament(tournament_data: TournamentCreate, current_user: User = Depends(get_current_user)):
