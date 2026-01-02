@@ -20,6 +20,8 @@ import ChampionshipScoreEntry from './pages/ChampionshipScoreEntry';
 import PublicChampionshipStandings from './pages/PublicChampionshipStandings';
 // Archive import
 import Archives from './pages/Archives';
+// Admin password reset
+import AdminResetPassword from './pages/AdminResetPassword';
 import '@/App.css';
 
 const PrivateRoute = ({ children }) => {
