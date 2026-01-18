@@ -396,9 +396,21 @@ const ChampionshipManage = () => {
                   )}
                 </>
               ) : (
-                <Button onClick={() => setShowKnockoutDialog(true)} className="w-full bg-amber-500 hover:bg-amber-600">
-                  <Play className="w-4 h-4 mr-2" /> Enter Knockout Bracket
-                </Button>
+                <div className="space-y-4">
+                  <Button onClick={() => setShowKnockoutDialog(true)} className="w-full bg-amber-500 hover:bg-amber-600">
+                    <Play className="w-4 h-4 mr-2" /> Quick Entry (Simple Bracket)
+                  </Button>
+                  <Button 
+                    onClick={() => navigate(`/championships/${id}/setup-knockout`)} 
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Calendar className="w-4 h-4 mr-2" /> Full Bracket Setup (With Dates & Preliminary)
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Use "Full Bracket Setup" for tournaments with preliminary rounds or scheduled dates
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>
