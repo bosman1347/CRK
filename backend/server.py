@@ -254,12 +254,21 @@ class KnockoutBracketEntry(BaseModel):
 # Models for full knockout bracket setup
 class KnockoutMatchSetup(BaseModel):
     match_number: int
-    participant1_name: str  # Can be "TBD" for matches fed by preliminary
-    participant2_name: str  # Can be "TBD" for matches fed by preliminary
+    participant1_name: str = ""  # Can be "TBD" or empty for matches fed by preliminary
+    participant2_name: str = ""  # Can be "TBD" or empty for matches fed by preliminary
     scheduled_date: Optional[str] = None  # "2026/01/17"
     scheduled_time: Optional[str] = None  # "09:00"
     green: Optional[str] = None
-    rink: Optional[int] = None
+    rink: Optional[Union[int, str]] = None  # Accept both int and string
+    
+    @validator('rink', pre=True, always=True)
+    def convert_rink(cls, v):
+        if v is None or v == '':
+            return None
+        try:
+            return int(v)
+        except (ValueError, TypeError):
+            return None
 
 class KnockoutBracketSetup(BaseModel):
     preliminary_matches: Optional[List[KnockoutMatchSetup]] = []  # For 17-24 teams
