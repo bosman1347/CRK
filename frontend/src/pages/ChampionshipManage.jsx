@@ -307,6 +307,31 @@ const ChampionshipManage = () => {
   const allRoundRobinVerified = roundRobinMatches.length > 0 && roundRobinMatches.every(m => m.verified);
   const currentStageMatches = matches.filter(m => m.stage === championship?.current_stage);
   const allCurrentStageVerified = currentStageMatches.length > 0 && currentStageMatches.every(m => m.verified);
+  
+  // Get all unique knockout stages for the selector
+  const knockoutStages = [...new Set(knockoutMatches.map(m => m.stage))];
+  const stageOrder = ['qualifying', 'preliminary', 'last_16', 'quarter_final', 'knockout_quarter', 'semi_final', 'knockout_semi', 'final'];
+  const orderedKnockoutStages = stageOrder.filter(s => knockoutStages.includes(s));
+  
+  // Matches for the selected stage
+  const displayedMatches = matches.filter(m => m.stage === selectedStage);
+  const allDisplayedVerified = displayedMatches.length > 0 && displayedMatches.every(m => m.verified);
+  
+  // Stage display name helper
+  const getStageName = (stage) => {
+    const names = {
+      'qualifying': 'Qualifying Round',
+      'preliminary': 'Qualifying Round',
+      'last_16': 'Last 16',
+      'quarter_final': 'Quarter Finals',
+      'knockout_quarter': 'Quarter Finals',
+      'semi_final': 'Semi Finals',
+      'knockout_semi': 'Semi Finals',
+      'final': 'Final',
+      'round_robin': 'Round Robin'
+    };
+    return names[stage] || stage.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><p>Loading championship...</p></div>;
