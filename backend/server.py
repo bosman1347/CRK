@@ -1694,6 +1694,28 @@ async def verify_championship_match(
             {"id": loser_id},
             {"$set": {"eliminated": True}}
         )
+        
+        # Auto-advance winner to next match if linked
+        if match.get("next_match_id") and match.get("next_match_slot"):
+            winner_name = match["participant1_name"] if winner_id == match["participant1_id"] else match["participant2_name"]
+            
+            # Update the next match with the winner
+            if match["next_match_slot"] == 1:
+                await db.championship_matches.update_one(
+                    {"id": match["next_match_id"]},
+                    {"$set": {
+                        "participant1_id": winner_id,
+                        "participant1_name": winner_name
+                    }}
+                )
+            else:
+                await db.championship_matches.update_one(
+                    {"id": match["next_match_id"]},
+                    {"$set": {
+                        "participant2_id": winner_id,
+                        "participant2_name": winner_name
+                    }}
+                )
     
     return {"message": "Match verified successfully", "winner_id": winner_id, "is_draw": is_draw}
 
