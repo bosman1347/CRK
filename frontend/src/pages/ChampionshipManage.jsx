@@ -461,9 +461,34 @@ const ChampionshipManage = () => {
 
             <TabsContent value="matches">
               <div className="space-y-6">
+                {/* Stage Selector for Knockout */}
+                {championship.status === 'knockout' && orderedKnockoutStages.length > 1 && (
+                  <Card className="border-blue-200 bg-blue-50">
+                    <CardContent className="py-4">
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <span className="text-sm font-medium text-blue-800">View Round:</span>
+                        {orderedKnockoutStages.map(stage => (
+                          <Button
+                            key={stage}
+                            size="sm"
+                            variant={selectedStage === stage ? "default" : "outline"}
+                            onClick={() => setSelectedStage(stage)}
+                            className={selectedStage === stage ? "bg-blue-600 hover:bg-blue-700" : ""}
+                          >
+                            {getStageName(stage)}
+                            {stage === championship.current_stage && (
+                              <Badge className="ml-2 bg-amber-500 text-white text-xs">Current</Badge>
+                            )}
+                          </Button>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <div className="flex items-center justify-between">
                   <h3 className="text-2xl font-heading">
-                    {championship.current_stage.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Matches
+                    {getStageName(selectedStage || championship.current_stage)} Matches
                   </h3>
                   <div className="flex gap-3 items-center">
                     {accessToken && (
@@ -473,8 +498,8 @@ const ChampionshipManage = () => {
                         </Button>
                       </Dialog>
                     )}
-                    <Badge className={allCurrentStageVerified ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}>
-                      {currentStageMatches.filter(m => m.verified).length} / {currentStageMatches.length} Verified
+                    <Badge className={allDisplayedVerified ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}>
+                      {displayedMatches.filter(m => m.verified).length} / {displayedMatches.length} Verified
                     </Badge>
                   </div>
                 </div>
