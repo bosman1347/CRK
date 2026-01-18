@@ -152,15 +152,25 @@ const KnockoutBracket = ({ matches, championship, byeParticipants = [] }) => {
                     </div>
                     
                     {/* Match Info */}
-                    <div className="mt-3 flex items-center justify-between">
-                      {match.green && (
-                        <span className="text-xs text-muted-foreground">
-                          Green {match.green} - Rink {match.rink}
-                        </span>
+                    <div className="mt-3 space-y-2">
+                      {/* Scheduled date/time */}
+                      {(match.scheduled_date || match.scheduled_time) && (
+                        <div className="text-xs text-blue-600 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {match.scheduled_date && new Date(match.scheduled_date).toLocaleDateString()}
+                          {match.scheduled_time && ` ${match.scheduled_time}`}
+                        </div>
                       )}
-                      <Badge className={match.verified ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}>
-                        {match.verified ? 'Completed' : 'Pending'}
-                      </Badge>
+                      <div className="flex items-center justify-between">
+                        {match.green && (
+                          <span className="text-xs text-muted-foreground">
+                            Green {match.green} - Rink {match.rink}
+                          </span>
+                        )}
+                        <Badge className={match.verified ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}>
+                          {match.verified ? 'Completed' : 'Pending'}
+                        </Badge>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
