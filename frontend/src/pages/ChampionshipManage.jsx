@@ -38,9 +38,18 @@ const ChampionshipManage = () => {
   const { getAuthHeader } = useAuth();
   const navigate = useNavigate();
 
+  const [selectedStage, setSelectedStage] = useState(null);
+
   useEffect(() => {
     fetchData();
   }, [id]);
+
+  // Update selectedStage when championship loads
+  useEffect(() => {
+    if (championship && !selectedStage) {
+      setSelectedStage(championship.current_stage);
+    }
+  }, [championship]);
 
   const fetchData = async () => {
     try {
