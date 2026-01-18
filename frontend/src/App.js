@@ -65,6 +65,7 @@ function AppRoutes() {
       {/* Championship routes */}
       <Route path="/championships/create" element={<PrivateRoute><CreateChampionship /></PrivateRoute>} />
       <Route path="/championships/:id" element={<PrivateRoute><ChampionshipManage /></PrivateRoute>} />
+      <Route path="/championships/:id/setup-knockout" element={<PrivateRoute><KnockoutBracketSetup /></PrivateRoute>} />
       <Route path="/championship-round/:token" element={<ChampionshipScoreEntry />} />
       <Route path="/championship-standings/:id" element={<PublicChampionshipStandings />} />
       {/* Archive route */}
