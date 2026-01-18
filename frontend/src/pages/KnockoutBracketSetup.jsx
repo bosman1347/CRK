@@ -361,7 +361,7 @@ const KnockoutBracketSetup = () => {
               <div className="text-sm text-muted-foreground mt-6">
                 {numTeams > 16 && (
                   <span className="text-amber-600">
-                    Preliminary round needed: {(numTeams - 16) * 2} teams play {numTeams - 16} matches
+                    Qualifying round needed: {(numTeams - 16) * 2} teams play {numTeams - 16} matches
                   </span>
                 )}
                 {numTeams === 16 && <span>Standard Last 16 bracket</span>}
@@ -371,17 +371,17 @@ const KnockoutBracketSetup = () => {
           </CardContent>
         </Card>
 
-        {/* Preliminary Round (if needed) */}
+        {/* Qualifying Round (if needed) */}
         {preliminaryMatches.length > 0 && (
           <>
-            {renderMatchInputs('preliminary', preliminaryMatches, 'Preliminary Round')}
+            {renderMatchInputs('preliminary', preliminaryMatches, 'Qualifying Round')}
             
             {/* Mapping Section */}
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle className="text-lg">Preliminary → Last 16 Mapping</CardTitle>
+                <CardTitle className="text-lg">Qualifying → Last 16 Mapping</CardTitle>
                 <CardDescription>
-                  Specify which Last 16 match and slot each preliminary winner advances to
+                  Specify which Last 16 match and slot each qualifying winner advances to
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -389,7 +389,7 @@ const KnockoutBracketSetup = () => {
                   {preliminaryMapping.map((mapping, index) => (
                     <div key={index} className="flex items-center gap-4 p-3 bg-stone-50 rounded-lg">
                       <span className="text-sm font-medium">
-                        Preliminary Match {mapping.preliminary_match} winner →
+                        Qualifying Match {mapping.preliminary_match} winner →
                       </span>
                       <div className="flex items-center gap-2">
                         <Label className="text-xs">Last 16 Match</Label>
