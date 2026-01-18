@@ -36,6 +36,11 @@ security = HTTPBearer(auto_error=False)
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
+# Health check endpoint for Kubernetes
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "lawn-bowls-api"}
+
 # Models
 class UserRegister(BaseModel):
     email: EmailStr
