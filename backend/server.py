@@ -2397,7 +2397,7 @@ async def setup_full_knockout_bracket(
     return {
         "message": f"Created complete knockout bracket with {len(all_matches)} matches",
         "stages": {
-            "preliminary": len(bracket_setup.preliminary_matches or []),
+            "qualifying": len(bracket_setup.preliminary_matches or []),
             "last_16": len(bracket_setup.last_16_matches),
             "quarter_final": len([m for m in all_matches if m["stage"] == "quarter_final"]),
             "semi_final": len([m for m in all_matches if m["stage"] == "semi_final"]),
