@@ -2322,7 +2322,7 @@ async def setup_full_knockout_bracket(
     # Preliminary -> Last 16 (using mapping if provided)
     if bracket_setup.preliminary_to_last16_mapping:
         for mapping in bracket_setup.preliminary_to_last16_mapping:
-            prelim_match = match_by_stage_number.get(("preliminary", mapping["preliminary_match"]))
+            prelim_match = match_by_stage_number.get(("qualifying", mapping["preliminary_match"]))
             last16_match = match_by_stage_number.get(("last_16", mapping["last16_match"]))
             if prelim_match and last16_match:
                 await db.championship_matches.update_one(
