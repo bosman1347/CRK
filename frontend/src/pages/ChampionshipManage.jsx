@@ -354,7 +354,7 @@ const ChampionshipManage = () => {
               <div className="flex gap-2 mt-2">
                 <Badge className="bg-white/20 text-white capitalize">{championship.competition_type}</Badge>
                 <Badge className="bg-white/20 text-white capitalize">{championship.gender_category}</Badge>
-                <Badge className="bg-white/20 text-white capitalize">{championship.current_stage.replace(/_/g, ' ')}</Badge>
+                <Badge className="bg-white/20 text-white capitalize">{getStageName(championship.current_stage)}</Badge>
               </div>
             </div>
             <div className="flex gap-3">
