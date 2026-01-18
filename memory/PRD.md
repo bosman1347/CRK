@@ -13,6 +13,7 @@ A Lawn Bowls tournament management application for Centurion Bowls Club, support
 2. **Standard Tournament**: End-based scoring, win/draw/loss points
 3. **Club Championship**: 
    - Round-robin sections → Knockout bracket
+   - Knockout-only with preliminary rounds
    - Singles, Pairs, Trips, Fours formats
    - Men's, Ladies', Mixed categories
 
@@ -23,60 +24,59 @@ A Lawn Bowls tournament management application for Centurion Bowls Club, support
 - CSV participant upload
 - Archive completed tournaments
 - Mobile-responsive design
+- **Full knockout bracket setup with preliminary rounds and scheduling**
+- **Auto-advancement of winners to next round**
 
 ## What's Been Implemented
 
-### Dec 30, 2025 - BYE Logic Fix
-**Problem**: With odd number of section winners (e.g., 5), one winner was excluded from knockout instead of receiving a BYE.
+### Jan 18, 2026 - Full Knockout Bracket with Preliminary Rounds
+**Problem**: Club had 20 entries for Men's Pairs - needed preliminary round for 4 teams before Last 16.
 
 **Solution Implemented**:
-1. `generate_knockout_bracket` calculates bracket size (next power of 2) and assigns BYEs to top-seeded participants
-2. `advance_knockout_round` now properly saves and retrieves `bye_participant_ids`
-3. New API endpoint `/api/championships/{id}/bye-participants`
-4. Public bracket endpoint includes `bye_participants` in response
-5. Frontend displays "Advances Automatically" banner with participant badges
+1. New `/api/championships/{id}/setup-full-knockout` endpoint
+2. Support for preliminary rounds (17-24 teams)
+3. Pre-create ALL matches with scheduled dates/times
+4. Auto-advance winners to next match when verified
+5. Match linking system (next_match_id, next_match_slot)
+6. New `KnockoutBracketSetup.jsx` page for organizers
+7. Updated `KnockoutBracket.jsx` to display dates and new stages
 
-**Test Results**: 11/11 backend tests passed covering 3, 4, 5, and 7 section scenarios
+**Match Flow**:
+- Preliminary (4 matches) → Last 16 (8) → Quarter (4) → Semi (2) → Final (1)
+- When a preliminary match is verified, winner automatically fills their slot in Last 16
 
-### Previously Implemented
-- Full Club Championship feature (creation, CSV upload, round-robin generation, scoring)
-- Archive & Delete functionality
-- CSV upload with multi-encoding support
-- Knockout bracket visualization
+### Jan 2, 2026 - Admin Password Reset
+- Added `/admin-reset` page for password resets without email
+- Admin code: `CenturionBowls2025`
+
+### Dec 30, 2025 - BYE Logic Fix
+- Fixed knockout generation for odd numbers of section winners
+- Best performers get BYE advantage
+- Display "Advances Automatically" in bracket
 
 ## API Endpoints
 
-### Championships
-- `POST /api/championships` - Create championship
-- `POST /api/championships/{id}/upload-participants` - Upload CSV
-- `POST /api/championships/{id}/generate-round-robin` - Generate matches
-- `POST /api/championships/{id}/generate-knockout` - Generate knockout bracket
-- `POST /api/championships/{id}/advance-knockout` - Advance to next round
-- `GET /api/championships/{id}/bye-participants` - Get BYE participants
+### Knockout Bracket Setup
+- `POST /api/championships/{id}/setup-full-knockout` - Create full bracket with all rounds
+- Auto-links matches for winner progression
 
-### Public
-- `GET /api/public/championships/{id}/standings` - Public standings
-- `GET /api/public/championships/{id}/bracket` - Public bracket with BYE info
-
-## Data Models
-
-### Championship
+### Match Model Updates
 ```
-{
-  id, name, creator_id, competition_type, gender_category,
-  start_type, status, current_stage, bye_participant_ids
+ChampionshipMatch {
+  ...existing fields...
+  match_number: int          // Display number (1, 2, 3...)
+  scheduled_date: str        // "2026-01-17"
+  scheduled_time: str        // "09:00"
+  next_match_id: str         // ID of match winner advances to
+  next_match_slot: int       // 1 or 2 (which participant slot)
+  source_match_ids: [str]    // IDs of matches that feed into this
 }
 ```
 
-### ChampionshipParticipant
-```
-{
-  id, championship_id, section_id, name,
-  matches_played, wins, draws, losses, points,
-  shots_for, shots_against, shot_difference,
-  eliminated, knockout_seed
-}
-```
+### New Stages
+- `preliminary` - For 17-24 team brackets
+- `last_16` - Standard round of 16
+- `quarter_final`, `semi_final`, `final`
 
 ## Technical Stack
 - **Frontend**: React, Tailwind CSS, shadcn/ui, qrcode.react
@@ -87,18 +87,20 @@ A Lawn Bowls tournament management application for Centurion Bowls Club, support
 
 ### P0 - Complete
 - [x] BYE logic for odd number of participants
-- [x] Frontend display "Advances automatically"
+- [x] Admin password reset
+- [x] Full knockout bracket with preliminary rounds
+- [x] Match scheduling with dates/times
+- [x] Auto-advance winners
 
 ### P1 - Deferred
 - [ ] Redesign printed scorecards (waiting for user specifications)
 
 ### P2 - Future
 - [ ] Refactor server.py into separate route files
-- [ ] Add custom hooks for complex frontend state management
-- [ ] Performance optimization for large tournaments
+- [ ] Add custom hooks for complex frontend state
 
 ## Files of Reference
-- `/app/backend/server.py` - Main API
-- `/app/frontend/src/components/KnockoutBracket.jsx` - Bracket display
-- `/app/frontend/src/pages/ChampionshipManage.jsx` - Championship management
-- `/app/tests/test_bye_logic.py` - BYE logic test suite
+- `/app/backend/server.py` - Main API with new knockout setup endpoint
+- `/app/frontend/src/pages/KnockoutBracketSetup.jsx` - Full bracket setup page
+- `/app/frontend/src/components/KnockoutBracket.jsx` - Updated bracket display
+- `/app/frontend/src/pages/ChampionshipManage.jsx` - Updated with setup options
