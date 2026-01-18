@@ -13,15 +13,19 @@ const KnockoutBracket = ({ matches, championship, byeParticipants = [] }) => {
   });
 
   // Order stages properly
-  const stageOrder = ['knockout_round_1', 'knockout_round_2', 'knockout_quarter', 'knockout_semi', 'final'];
+  const stageOrder = ['preliminary', 'last_16', 'knockout_round_1', 'knockout_round_2', 'knockout_quarter', 'quarter_final', 'knockout_semi', 'semi_final', 'final'];
   const orderedStages = stageOrder.filter(s => stages[s]);
 
   const getStageTitle = (stage) => {
     const titles = {
+      'preliminary': 'Preliminary',
+      'last_16': 'Last 16',
       'knockout_round_1': 'Round 1',
       'knockout_round_2': 'Round 2',
       'knockout_quarter': 'Quarter Finals',
+      'quarter_final': 'Quarter Finals',
       'knockout_semi': 'Semi Finals',
+      'semi_final': 'Semi Finals',
       'final': 'Final'
     };
     return titles[stage] || stage.replace(/_/g, ' ');
