@@ -559,14 +559,14 @@ const ChampionshipManage = () => {
                 ))}
 
                 {/* Knockout Matches */}
-                {championship.current_stage !== 'round_robin' && (
+                {selectedStage !== 'round_robin' && championship.status === 'knockout' && (
                   <Card className="floating-card border-stone-200">
                     <CardHeader>
-                      <CardTitle className="text-lg capitalize">{championship.current_stage.replace(/_/g, ' ')}</CardTitle>
+                      <CardTitle className="text-lg">{getStageName(selectedStage)}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {currentStageMatches.map(match => (
+                        {displayedMatches.map(match => (
                           <div key={match.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-lg">
                             <div className="flex-1">
                               <div className="flex items-center gap-4">
