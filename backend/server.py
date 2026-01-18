@@ -251,6 +251,25 @@ class KnockoutBracketEntry(BaseModel):
     participant1_name: str
     participant2_name: str
 
+# Models for full knockout bracket setup
+class KnockoutMatchSetup(BaseModel):
+    match_number: int
+    participant1_name: str  # Can be "TBD" for matches fed by preliminary
+    participant2_name: str  # Can be "TBD" for matches fed by preliminary
+    scheduled_date: Optional[str] = None  # "2026/01/17"
+    scheduled_time: Optional[str] = None  # "09:00"
+    green: Optional[str] = None
+    rink: Optional[int] = None
+
+class KnockoutBracketSetup(BaseModel):
+    preliminary_matches: Optional[List[KnockoutMatchSetup]] = []  # For 17-24 teams
+    last_16_matches: List[KnockoutMatchSetup]
+    quarter_final_matches: Optional[List[KnockoutMatchSetup]] = []
+    semi_final_matches: Optional[List[KnockoutMatchSetup]] = []
+    final_match: Optional[KnockoutMatchSetup] = None
+    # Mapping: which preliminary match feeds into which last_16 match
+    preliminary_to_last16_mapping: Optional[List[dict]] = None  # [{"preliminary_match": 1, "last16_match": 1, "slot": 1}]
+
 # ==================== ARCHIVE MODELS ====================
 
 class ArchivedTournament(BaseModel):
