@@ -208,7 +208,20 @@ const KnockoutBracketSetup = () => {
       toast.success(response.data.message);
       navigate(`/championships/${id}`);
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to setup bracket');
+      // Handle Pydantic validation errors (array of objects)
+      const detail = error.response?.data?.detail;
+      let errorMsg = 'Failed to setup bracket';
+      
+      if (typeof detail === 'string') {
+        errorMsg = detail;
+      } else if (Array.isArray(detail)) {
+        // Pydantic validation errors
+        errorMsg = detail.map(e => e.msg || JSON.stringify(e)).join(', ');
+      } else if (detail?.msg) {
+        errorMsg = detail.msg;
+      }
+      
+      toast.error(errorMsg);
     } finally {
       setSubmitting(false);
     }
