@@ -2386,7 +2386,7 @@ async def setup_full_knockout_bracket(
             )
     
     # Determine initial stage
-    initial_stage = "preliminary" if bracket_setup.preliminary_matches else "last_16"
+    initial_stage = "qualifying" if bracket_setup.preliminary_matches else "last_16"
     
     # Update championship status
     await db.championships.update_one(
