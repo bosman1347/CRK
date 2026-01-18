@@ -2285,7 +2285,7 @@ async def setup_full_knockout_bracket(
     # 1. Preliminary matches (if any)
     if bracket_setup.preliminary_matches:
         for setup in bracket_setup.preliminary_matches:
-            await create_match("preliminary", setup)
+            await create_match("qualifying", setup)
     
     # 2. Last 16 matches
     for setup in bracket_setup.last_16_matches:
