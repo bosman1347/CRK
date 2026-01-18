@@ -216,7 +216,7 @@ class ChampionshipMatch(BaseModel):
     id: str
     championship_id: str
     section_id: Optional[str] = None  # For round robin matches
-    stage: str  # "round_robin", "preliminary", "last_16", "quarter_final", "semi_final", "final"
+    stage: str  # "round_robin", "qualifying", "last_16", "quarter_final", "semi_final", "final"
     bracket_position: Optional[int] = None  # Position in knockout bracket
     match_number: Optional[int] = None  # Display number (1, 2, 3, etc.)
     participant1_id: Optional[str] = None  # Can be None for TBD
