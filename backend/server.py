@@ -216,18 +216,26 @@ class ChampionshipMatch(BaseModel):
     id: str
     championship_id: str
     section_id: Optional[str] = None  # For round robin matches
-    stage: str  # "round_robin", "knockout_round_1", "knockout_quarter", "knockout_semi", "final"
+    stage: str  # "round_robin", "preliminary", "last_16", "quarter_final", "semi_final", "final"
     bracket_position: Optional[int] = None  # Position in knockout bracket
-    participant1_id: str
-    participant2_id: str
-    participant1_name: str
-    participant2_name: str
+    match_number: Optional[int] = None  # Display number (1, 2, 3, etc.)
+    participant1_id: Optional[str] = None  # Can be None for TBD
+    participant2_id: Optional[str] = None  # Can be None for TBD
+    participant1_name: str  # "TBD" or actual name
+    participant2_name: str  # "TBD" or actual name
     participant1_shots: Optional[int] = None
     participant2_shots: Optional[int] = None
     winner_id: Optional[str] = None
     is_draw: bool = False
     green: Optional[str] = None
     rink: Optional[int] = None
+    # Scheduling
+    scheduled_date: Optional[str] = None  # "2026/01/17"
+    scheduled_time: Optional[str] = None  # "09:00"
+    # Match linking for knockout progression
+    next_match_id: Optional[str] = None  # ID of match winner advances to
+    next_match_slot: Optional[int] = None  # 1 or 2 (which participant slot in next match)
+    source_match_ids: Optional[List[str]] = None  # IDs of matches that feed into this one
     scores_entered: bool = False
     verified: bool = False
     verified_by: Optional[str] = None
