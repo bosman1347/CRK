@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Trophy, Crown, FastForward } from 'lucide-react';
+import { Trophy, Crown, FastForward, Calendar } from 'lucide-react';
 
 const KnockoutBracket = ({ matches, championship, byeParticipants = [] }) => {
   // Group matches by stage
