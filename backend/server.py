@@ -2150,6 +2150,232 @@ async def manual_knockout_entry(
         "access_token": knockout_access_token
     }
 
+@api_router.post("/championships/{championship_id}/setup-full-knockout")
+async def setup_full_knockout_bracket(
+    championship_id: str,
+    bracket_setup: KnockoutBracketSetup,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Set up a complete knockout bracket with all rounds pre-created.
+    Supports preliminary rounds for 17-24 teams, with matches linked for auto-advancement.
+    """
+    import uuid
+    
+    # Verify access
+    championship = await db.championships.find_one({"id": championship_id}, {"_id": 0})
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    if championship.get("creator_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Clear existing data
+    await db.championship_sections.delete_many({"championship_id": championship_id})
+    await db.championship_participants.delete_many({"championship_id": championship_id})
+    await db.championship_matches.delete_many({"championship_id": championship_id})
+    
+    # Create a single "knockout" section
+    section_id = str(uuid.uuid4())
+    await db.championship_sections.insert_one({
+        "id": section_id,
+        "championship_id": championship_id,
+        "name": "Knockout",
+        "status": "in_progress"
+    })
+    
+    participants_map = {}  # name -> participant_doc
+    all_matches = []  # Store all created matches
+    match_by_stage_number = {}  # (stage, match_number) -> match_doc
+    
+    access_token = secrets.token_urlsafe(32)
+    
+    async def get_or_create_participant(name: str) -> dict:
+        """Get existing participant or create new one"""
+        if name == "TBD" or not name:
+            return None
+        if name in participants_map:
+            return participants_map[name]
+        
+        participant_id = str(uuid.uuid4())
+        participant_doc = {
+            "id": participant_id,
+            "championship_id": championship_id,
+            "section_id": section_id,
+            "name": name,
+            "matches_played": 0,
+            "wins": 0, "draws": 0, "losses": 0, "points": 0,
+            "shots_for": 0, "shots_against": 0, "shot_difference": 0,
+            "eliminated": False,
+            "knockout_seed": len(participants_map) + 1
+        }
+        await db.championship_participants.insert_one(participant_doc)
+        participants_map[name] = participant_doc
+        return participant_doc
+    
+    async def create_match(stage: str, setup: KnockoutMatchSetup) -> dict:
+        """Create a single match"""
+        p1 = await get_or_create_participant(setup.participant1_name)
+        p2 = await get_or_create_participant(setup.participant2_name)
+        
+        match_id = str(uuid.uuid4())
+        match_doc = {
+            "id": match_id,
+            "championship_id": championship_id,
+            "section_id": None,
+            "stage": stage,
+            "bracket_position": setup.match_number,
+            "match_number": setup.match_number,
+            "participant1_id": p1["id"] if p1 else None,
+            "participant2_id": p2["id"] if p2 else None,
+            "participant1_name": setup.participant1_name or "TBD",
+            "participant2_name": setup.participant2_name or "TBD",
+            "participant1_shots": None,
+            "participant2_shots": None,
+            "winner_id": None,
+            "is_draw": False,
+            "green": setup.green,
+            "rink": setup.rink,
+            "scheduled_date": setup.scheduled_date,
+            "scheduled_time": setup.scheduled_time,
+            "next_match_id": None,
+            "next_match_slot": None,
+            "source_match_ids": [],
+            "scores_entered": False,
+            "verified": False,
+            "status": "pending",
+            "access_token": access_token
+        }
+        await db.championship_matches.insert_one(match_doc)
+        match_by_stage_number[(stage, setup.match_number)] = match_doc
+        all_matches.append(match_doc)
+        return match_doc
+    
+    # Create all matches by stage
+    # 1. Preliminary matches (if any)
+    if bracket_setup.preliminary_matches:
+        for setup in bracket_setup.preliminary_matches:
+            await create_match("preliminary", setup)
+    
+    # 2. Last 16 matches
+    for setup in bracket_setup.last_16_matches:
+        await create_match("last_16", setup)
+    
+    # 3. Quarter finals (if provided, otherwise create TBD matches)
+    if bracket_setup.quarter_final_matches:
+        for setup in bracket_setup.quarter_final_matches:
+            await create_match("quarter_final", setup)
+    else:
+        # Auto-create 4 quarter final matches
+        for i in range(1, 5):
+            setup = KnockoutMatchSetup(match_number=i, participant1_name="TBD", participant2_name="TBD")
+            await create_match("quarter_final", setup)
+    
+    # 4. Semi finals (if provided, otherwise create TBD matches)
+    if bracket_setup.semi_final_matches:
+        for setup in bracket_setup.semi_final_matches:
+            await create_match("semi_final", setup)
+    else:
+        # Auto-create 2 semi final matches
+        for i in range(1, 3):
+            setup = KnockoutMatchSetup(match_number=i, participant1_name="TBD", participant2_name="TBD")
+            await create_match("semi_final", setup)
+    
+    # 5. Final
+    if bracket_setup.final_match:
+        await create_match("final", bracket_setup.final_match)
+    else:
+        setup = KnockoutMatchSetup(match_number=1, participant1_name="TBD", participant2_name="TBD")
+        await create_match("final", setup)
+    
+    # Now link matches: set next_match_id and next_match_slot
+    # Preliminary -> Last 16 (using mapping if provided)
+    if bracket_setup.preliminary_to_last16_mapping:
+        for mapping in bracket_setup.preliminary_to_last16_mapping:
+            prelim_match = match_by_stage_number.get(("preliminary", mapping["preliminary_match"]))
+            last16_match = match_by_stage_number.get(("last_16", mapping["last16_match"]))
+            if prelim_match and last16_match:
+                await db.championship_matches.update_one(
+                    {"id": prelim_match["id"]},
+                    {"$set": {
+                        "next_match_id": last16_match["id"],
+                        "next_match_slot": mapping["slot"]
+                    }}
+                )
+                # Add source match reference
+                await db.championship_matches.update_one(
+                    {"id": last16_match["id"]},
+                    {"$push": {"source_match_ids": prelim_match["id"]}}
+                )
+    
+    # Last 16 -> Quarter finals (standard bracket progression)
+    # Match 1&2 -> QF1, Match 3&4 -> QF2, etc.
+    last16_matches = sorted([m for m in all_matches if m["stage"] == "last_16"], key=lambda x: x["match_number"])
+    qf_matches = sorted([m for m in all_matches if m["stage"] == "quarter_final"], key=lambda x: x["match_number"])
+    
+    for i, l16_match in enumerate(last16_matches):
+        qf_index = i // 2
+        slot = (i % 2) + 1
+        if qf_index < len(qf_matches):
+            await db.championship_matches.update_one(
+                {"id": l16_match["id"]},
+                {"$set": {"next_match_id": qf_matches[qf_index]["id"], "next_match_slot": slot}}
+            )
+            await db.championship_matches.update_one(
+                {"id": qf_matches[qf_index]["id"]},
+                {"$push": {"source_match_ids": l16_match["id"]}}
+            )
+    
+    # Quarter finals -> Semi finals
+    for i, qf_match in enumerate(qf_matches):
+        sf_index = i // 2
+        slot = (i % 2) + 1
+        sf_matches = sorted([m for m in all_matches if m["stage"] == "semi_final"], key=lambda x: x["match_number"])
+        if sf_index < len(sf_matches):
+            await db.championship_matches.update_one(
+                {"id": qf_match["id"]},
+                {"$set": {"next_match_id": sf_matches[sf_index]["id"], "next_match_slot": slot}}
+            )
+            await db.championship_matches.update_one(
+                {"id": sf_matches[sf_index]["id"]},
+                {"$push": {"source_match_ids": qf_match["id"]}}
+            )
+    
+    # Semi finals -> Final
+    final_match = next((m for m in all_matches if m["stage"] == "final"), None)
+    sf_matches = sorted([m for m in all_matches if m["stage"] == "semi_final"], key=lambda x: x["match_number"])
+    for i, sf_match in enumerate(sf_matches):
+        if final_match:
+            await db.championship_matches.update_one(
+                {"id": sf_match["id"]},
+                {"$set": {"next_match_id": final_match["id"], "next_match_slot": i + 1}}
+            )
+            await db.championship_matches.update_one(
+                {"id": final_match["id"]},
+                {"$push": {"source_match_ids": sf_match["id"]}}
+            )
+    
+    # Determine initial stage
+    initial_stage = "preliminary" if bracket_setup.preliminary_matches else "last_16"
+    
+    # Update championship status
+    await db.championships.update_one(
+        {"id": championship_id},
+        {"$set": {"status": "knockout", "current_stage": initial_stage}}
+    )
+    
+    return {
+        "message": f"Created complete knockout bracket with {len(all_matches)} matches",
+        "stages": {
+            "preliminary": len(bracket_setup.preliminary_matches or []),
+            "last_16": len(bracket_setup.last_16_matches),
+            "quarter_final": len([m for m in all_matches if m["stage"] == "quarter_final"]),
+            "semi_final": len([m for m in all_matches if m["stage"] == "semi_final"]),
+            "final": 1
+        },
+        "participants": list(participants_map.keys()),
+        "access_token": access_token
+    }
+
 @api_router.get("/public/championships/{championship_id}/standings")
 async def get_public_championship_standings(championship_id: str):
     """Get public standings for a championship"""
