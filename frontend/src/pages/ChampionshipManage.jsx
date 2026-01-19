@@ -677,6 +677,15 @@ const ChampionshipManage = () => {
             </TabsContent>
 
             <TabsContent value="bracket">
+              <div className="flex justify-end mb-4">
+                <Button 
+                  onClick={() => navigate(`/championships/${id}/print-bracket`)}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Printer className="w-4 h-4" /> Print Bracket
+                </Button>
+              </div>
               <KnockoutBracket matches={knockoutMatches} championship={championship} byeParticipants={byeParticipants} />
             </TabsContent>
           </Tabs>
