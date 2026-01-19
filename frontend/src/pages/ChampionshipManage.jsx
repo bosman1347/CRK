@@ -1,3 +1,4 @@
+// ChampionshipManage v2.1 - Stage Selector, Print Bracket - 2026-01-19
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
