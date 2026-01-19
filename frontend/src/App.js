@@ -19,6 +19,7 @@ import ChampionshipManage from './pages/ChampionshipManage';
 import ChampionshipScoreEntry from './pages/ChampionshipScoreEntry';
 import PublicChampionshipStandings from './pages/PublicChampionshipStandings';
 import KnockoutBracketSetup from './pages/KnockoutBracketSetup';
+import PrintableBracket from './pages/PrintableBracket';
 // Archive import
 import Archives from './pages/Archives';
 // Admin password reset
