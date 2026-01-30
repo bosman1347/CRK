@@ -1,160 +1,165 @@
 <analysis>**original_problem_statement:**
-The user initially requested a Lawn Bowls tournament management application with a Skins scoring system. This was expanded to include a Standard scoring mode. The project has since grown significantly to include a new Club Championship tournament type.
+The user initially requested a Lawn Bowls tournament management application with a Skins scoring system. This was expanded to include a Standard scoring mode and later a comprehensive Club Championship tournament type.
 
-**PRODUCT REQUIREMENTS for Club Championship & Other Features:**
-- **Tournament Types**:
-    - **Championships**: A new tournament format alongside existing Skins and Standard social tournaments.
-    - **Formats**: Must support Round Robin → Knockout and Knockout Only.
-    - **Disciplines**: Singles, Pairs, Trips, and Fours.
-    - **Categories**: Men's, Ladies', and Mixed, with sub-categories for Singles (Open, Novice, Veterans).
-- **Setup & Management**:
-    - Organizers must be able to create each type of competition.
-    - For Round Robin, organizers will upload a CSV file containing participants grouped by section. The system must automatically generate the round-robin schedule within each section.
-    - For Knockout, the system must automatically populate the bracket with winners from the Round Robin sections. This logic must correctly handle an odd number of winners by creating BYEs. For Knockout Only tournaments, the organizer will manually input the initial bracket.
-    - Organizers must be able to specify the number of ends for matches.
-- **Scoring & Verification**:
-    - Players use a generated QR code to access a page and enter their own scores.
-    - The organizer verifies these scores against paper scorecards.
-- **Archiving & Deletion**:
-    - A feature to **archive** completed tournaments and championships. The archive should store key details (name, final standings, scores, participants) for two years and be downloadable as a CSV. The original tournament data should be deleted after archiving.
-    - A separate feature to **permanently delete** tournaments/championships without archiving, mainly for cleaning up test data.
-- **Deferred Tasks**:
-    - The user requested a redesign of the printed scorecards but has put this task on hold.
+**PRODUCT REQUIREMENTS:**
+-   **Tournament Types**:
+    -   Social Tournaments: Skins and Standard scoring.
+    -   Club Championships: A more formal format supporting Round Robin → Knockout and Knockout Only.
+-   **Championship Features**:
+    -   **Disciplines**: Singles, Pairs, Trips, Fours.
+    -   **Categories**: Men's, Ladies', Mixed (with Open, Novice, Veterans sub-categories for Singles).
+    -   **Setup & Management**:
+        -   Round Robin: Organizers upload a CSV of participants grouped by section to auto-generate a schedule.
+        -   Knockout: The system must handle BYEs for odd numbers of winners. For Knockout Only tournaments, the organizer can set up a full bracket upfront.
+        -   **Full Bracket Setup**: A major enhancement allowing organizers to pre-create an entire knockout bracket for any number of teams (e.g., 20), including Qualifying Rounds (preliminary), scheduling matches with dates/times, and auto-advancing winners.
+    -   **Scoring**: Players use a QR code for score entry; the organizer verifies against paper scorecards.
+-   **Administration**:
+    -   **Archive & Delete**: Functionality to archive completed tournaments (storing data for two years) or permanently delete them.
+    -   **Password Reset**: An admin-only page to reset any user's password.
+-   **Printing**:
+    -   A feature to generate a printer-friendly version of the full knockout bracket, styled like a traditional tournament diagram.
+-   **Deferred Tasks**:
+    -   Redesigning the printed scorecards for individual matches is on hold.
 
 **User's preferred language**: English. The next agent MUST respond in English.
 
 **what currently exists?**
-A full-stack Lawn Bowls application featuring three distinct tournament types: Skins, Standard, and the newly implemented Club Championship. The backend and frontend for the Championship feature—including creation, CSV participant upload, round-robin generation, score entry, and standings—are largely complete. An archive/delete system for managing old tournaments has also been fully implemented. The application is functional but has a critical bug in the knockout bracket generation logic.
+A full-stack Lawn Bowls application with three tournament types: Skins, Standard, and Club Championship. The application supports end-to-end management, from creation and participant upload to scoring and viewing standings.
+
+Key features implemented include:
+-   **Full Knockout Bracket Setup**: A dedicated page allows organizers to define a knockout bracket for any number of teams (e.g., 17-32), which automatically creates Qualifying Rounds as needed. Matches can be scheduled with dates and times.
+-   **Winner Auto-Advancement**: When a match is verified, the winner automatically populates their slot in the next round.
+-   **BYE Logic**: The system correctly handles an odd number of participants in knockout rounds.
+-   **Printable Bracket**: A new page generates a printer-friendly, traditional tournament bracket view.
+-   **Admin Password Reset**: A page at  allows an administrator to reset any user's password using a secret code.
+-   **UI Enhancements**: A stage selector on the management page allows viewing matches from any round (e.g., Qualifying, Last 16, etc.), not just the current one.
 
 **Last working item**:
-- **Last item agent was working**: Fixing a bug in the knockout bracket generation logic in . The user reported that with an odd number of section winners (e.g., 5), one winner was being excluded from the knockout stage. The agent's goal is to correctly implement a **BYE** system, where the odd participant out automatically advances to the next round.
-- **Status**: IN PROGRESS
-- **Agent Testing Done**: N
-- **Which testing method agent to use?**: Backend testing. The agent should use  or write a Python script to test the  endpoint. The test case should involve creating a championship with an odd number of sections (e.g., 5), verifying all round-robin matches, and then calling the generation endpoint to confirm that it creates the correct number of matches and one BYE.
-- **User Testing Done**: N (User discovered the bug that initiated this fix).
+-   **Last item agent was working**: The agent was addressing a user's complaint that after the Print Bracket feature was added and deployed, the previously added stage selector buttons disappeared from the live site. This was a recurrence of a deployment issue where the latest code changes were not being reflected.
+-   **Status**: USER VERIFICATION PENDING
+-   **Agent Testing Done**: Y (Agent confirmed locally via build and screenshots that the code was correct and all UI elements were present. The problem was identified as a platform deployment/caching issue.)
+-   **Which testing method agent to use?**: Manual user testing on the live deployed site.
+-   **User Testing Done**: N (The user reported the bug on the live site but has not yet confirmed if the last attempt to fix it was successful. The user's last message on the topic indicated support had resolved the deployment problem, but this specific regression has not been re-verified.)
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Incorrect Knockout Generation for Odd Number of Winners (P0)**
-    - **Description**: The current logic for generating a knockout bracket from round-robin section winners fails when there is an odd number of winners. It pairs them up and discards the leftover winner instead of granting them a BYE.
-    - **Attempted fixes**: The agent started editing  to add BYE handling. It modified the  and  functions but did not complete or test the implementation. The last edit was to the  function.
-    - **Next debug checklist**:
-        1.  Review the changes made in  within the  and  functions.
-        2.  Ensure the logic correctly identifies when a BYE is needed (i.e., ).
-        3.  The participant with the BYE should be stored, likely in the  document's  or a dedicated field.
-        4.  The  function must be updated to include the BYE participant along with the winners of the current round's matches when creating the next round.
-        5.  Thoroughly test the entire flow with both even (4, 6) and odd (3, 5, 7) numbers of section winners.
-    - **Why fix this issue and what will be achieved with the fix?**: This is a critical bug blocking the core functionality of the Championship feature. Fixing it will allow tournaments with any number of sections to proceed correctly into the knockout stage, making the feature usable for the user.
-    - **Status**: IN PROGRESS
-    - **Is recurring issue?**: N
-    - **Should Test frontend/backend/both after fix?**: Both. The backend logic needs to be verified via API calls, and the frontend  component needs to be checked to ensure it correctly displays the participant with the BYE.
-    - **Blocked on other issue**: None.
+-   **Issue 1: Deployment platform caching/syncing issue (P0)**
+    -   **Description**: The user has repeatedly experienced the live deployment not reflecting the most recent code changes, even after successful deployment notifications. This leads to user frustration, regression of features, and wasted credits.
+    -   **Attempted fixes**: The agent confirmed code correctness, performed a local build, and added a version comment () to  to try and force a cache break. The agent concluded it was a platform issue and advised the user to contact Emergent Support. The user later confirmed support resolved the problem.
+    -   **Next debug checklist**:
+        1.  Verify with the user that the live site now correctly displays all features, including the stage selector buttons and the print bracket button.
+        2.  If the issue recurs, immediately guide the user to contact support with their Job ID. Do not attempt multiple redeployments.
+        3.  As a preventative measure for future changes, add a unique version comment (e.g., ) to key frontend files before finishing a task.
+    -   **Why fix this issue and what will be achieved with the fix?**: This is a critical platform-level issue that blocks progress and erodes user trust. Resolving it ensures that implemented features are actually delivered to the user.
+    -   **Status**: USER VERIFICATION PENDING
+    -   **Is recurring issue?**: Y
+    -   **Should Test frontend/backend/both after fix?**: This requires verification of the deployed frontend, not a code test.
+    -   **Blocked on other issue**: None.
 
 **In progress Task List**:
-- None. The only in-progress work is the bug fix listed above.
+-   None.
 
 **Upcoming and Future Tasks**
-- **Upcoming Tasks**:
-    - **Task 1: Complete and Test BYE Implementation (P0)**: Finish the code changes in  and test the fix for the knockout generation bug.
-- **Future Tasks**:
-    - **Task 1: Redesign Printed Scorecards (P1)**: The user has deferred this task. The agent must wait for new design specifications before working on . Status: NOT STARTED (Blocked on user input).
+-   **Upcoming Tasks**:
+    -   **Task 1: Comprehensive User Testing (P0)**: User needs to test all recently added features on the live site to confirm the deployment issues are fully resolved and everything functions as expected.
+-   **Future Tasks**:
+    -   **Task 1: Redesign Printed Scorecards (P1)**: This task is on hold, waiting for new design specifications from the user. (File: ).
+    -   **Task 2: Improve Standings for Knockout Only (P2)**: The standings tab is currently blank for this format. A potential improvement is to add an explanatory message or display knockout progress. This was deferred by the user.
+    -   **Task 3: Implement Email-based Forgot Password (P2)**: The current admin reset is a temporary solution. A full user-facing Forgot Password flow using an email service (e.g., Resend, SendGrid) was discussed.
 
 **Completed work in this session**
-- **Club Championship Feature (End-to-End)**:
-    - **Backend**: Implemented all necessary models (, , etc.) and API endpoints in  for creating championships, uploading participants via CSV, generating rounds (round-robin and knockout), and managing match scores.
-    - **Frontend**: Created all required pages (, , , ) and a  component. Integrated these into the main application.
-- **Archive & Delete Functionality**:
-    - Implemented backend APIs and frontend UI for archiving completed tournaments/championships and permanently deleting them from the dashboard.
-    - Created an  page to view and download archived data.
-- **Bug Fixes**:
-    - **CSV Upload**: Fixed an issue where CSV files from Excel would not upload. The backend was enhanced to handle various delimiters (, ) and file encodings.
-    - **Knockout Score Entry**: Resolved a bug where the QR code for knockout rounds contained an old access token, preventing players from entering scores.
-    - **Knockout Advancement**: Fixed a UI bug where the Generate Knockout button would not appear after all round-robin matches were verified.
+-   **BYE Logic Fix**: Corrected knockout generation for an odd number of winners.
+-   **Admin Password Reset Feature**: Created a secure page () for password resets, using an admin code from an environment variable.
+-   **Full Knockout Bracket Enhancement**:
+    -   Implemented a new setup page () to pre-create entire brackets with scheduling (dates/times).
+    -   Added logic for Qualifying Rounds for non-power-of-2 team counts.
+    -   Enabled auto-advancement of winners to the next round upon match verification.
+-   **UI/UX Improvements**:
+    -   Added a stage selector on  to view matches from any round.
+    -   Renamed Preliminary Round to Qualifying Round throughout the app.
+-   **Printable Bracket Feature**: Created a new page () to generate a printer-friendly tournament bracket.
+-   **Deployment & Health Check Fixes**:
+    -   Resolved multiple deployment blockers, including adding a  endpoint to  and moving hardcoded secrets to  files.
 
 **Earlier issues found/mentioned but not fixed**
-- None.
+-   None.
 
 **Known issue recurrence from previous fork**
-- None.
+-   None. The deployment caching issue originated and recurred within this session.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend**: React, React Router, Tailwind CSS, Axios, , shadcn/ui.
-- **Backend**: FastAPI, Pydantic, Motor (async MongoDB driver),  (JWT), .
-- **Database**: MongoDB.
-- **Architecture**: Full-stack SPA with a RESTful API.
-- **Key Logic**:
-    - **BYE Generation**: Algorithmic handling of odd-numbered participants in knockout stages.
-    - **CSV Parsing**: Robust parsing of user-uploaded files with  module.
-    - **Data Archiving**: Moving completed tournament data to a separate collection with a TTL (Time To Live) concept.
+-   **Frontend**: React, React Router, Tailwind CSS, shadcn/ui, Axios.
+-   **Backend**: FastAPI, Pydantic, Motor (async MongoDB driver).
+-   **Database**: MongoDB.
+-   **Key Logic**:
+    -   **Winner Auto-Advancement**: Backend logic updates the  for a participant upon match verification.
+    -   **Dynamic Bracket UI**:  dynamically renders input fields for different bracket sizes and stages.
+    -   **CSS for Printing**: A dedicated print stylesheet is used in  to create a clean, paper-friendly layout.
 
 **key DB schema**
-- **championships**: 
-- **championship_participants**: 
-- **archived_tournaments**: 
-- **tournaments**: 
-- **matches**: 
-- **users**: 
+-   **championships**: 
+-   **championship_matches**:  (New fields added)
+-   **users**: 
 
 **changes in tech stack**
-- Added  to backend dependencies for archive expiry calculations.
+-   None.
 
 **All files of reference**
-- : The monolithic backend file where the current bug fix is being implemented.
-- : The primary UI for managing a championship, where the user experiences the bug.
-- : The component that will need to render the BYE status.
-- : Contains the recently added archive and delete functionality.
-- : The page for viewing archived data.
+-   : Heavily modified to add new endpoints and update match verification logic.
+-   : Updated with a stage selector and new buttons for bracket setup and printing. This file was at the center of the deployment caching issue.
+-   : New page for advanced bracket creation.
+-   : New page for generating the printable bracket view.
+-   : New page for admin password resets.
+-   : Updated with routes for the new pages.
 
 **Areas that need refactoring**:
--  has grown substantially and should be broken down into multiple files using FastAPI's  (e.g., , , ).
-- Frontend pages like  and  have complex state and logic (handling modals, multiple data fetches, archive/delete actions) that could be simplified using custom hooks.
+-    is now over 2800 lines long and urgently needs to be broken down into multiple files using FastAPI's  (e.g., , , ). The current monolithic structure is becoming unmanageable.
 
 **key api endpoints**
-- : **(Currently Bugged)** Generates the knockout bracket.
-- : Advances winners (and BYEs) to the next knockout round.
-- : Archives a completed championship.
-- : Permanently deletes a championship.
-- : Retrieves a list of all archived items.
-- : Downloads a CSV of a specific archive.
+-   : **(New)** Creates a complete, scheduled knockout bracket.
+-   : **(New)** Resets a user's password using an admin code.
+-   : **(Modified)** Now includes logic to auto-advance winners.
+-   : **(New)** Health check endpoint for Kubernetes.
 
 **Critical Info for New Agent**
-- Your immediate and highest priority is to fix the knockout generation logic to correctly handle BYEs for an odd number of section winners. The user is actively testing this feature on the deployed application and is blocked by this bug.
-- The previous agent has already started the fix in  in the  and  functions. You must resume this work, complete it, and test it thoroughly.
-- Be aware that the user is interacting with a deployed version of the app, which has its own database. Your local test data may not match the user's. If you need to debug a specific user issue, you may need to ask for the Championship ID from their URL.
+-   **Deployment Issues**: The most critical issue has been the deployment platform not reflecting the latest code changes, likely due to aggressive caching. If the user reports a feature is missing after a deployment, do not assume it's a code bug. First, advise the user to contact Emergent Support with their Job ID to request a cache clear or investigate the deployment pipeline. This has been a recurring point of failure and user frustration.
+-   **Google Auth**: The Continue with Google button seen by the user is a platform-level feature and is **not** integrated into the application's authentication context. The app only supports email/password login. You must guide the user to use the email/password fields and the  route.
 
 **documents and test reports created in this job**
--  (Updated for backend tests).
-- A backend test report was likely generated (e.g., ).
+-   
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Reports being stuck after the round-robin phase with 5 sections while testing the deployed app. (BUG REPORT)
-2.  **Agent**: Asks for clarification, suggesting all matches must be verified for the Generate Knockout button to appear.
-3.  **User**: Confirms all 15 matches are verified.
-4.  **Agent**: Asks for championship ID to debug.
-5.  **Agent**: Investigates DB but finds only old test data. Realizes the user is on the deployed version.
-6.  **Agent**: Asks user to re-check the page and look for any errors.
-7.  **User**: Confirms email address used to log in.
-8.  **Agent**: Finds the user's championships and identifies an issue with a setup status championship.
-9.  **User**: Clarifies that the page shows 15/15 verified matches.
-10. **User**: Reports they found the button but discovered the knockout round only included 4 of the 5 section winners. **This is the core of the current bug.**
+1.  **User**: Asks if the bracket page can be printed.
+2.  **Agent**: Confirms it's possible and proposes a layout based on the user's uploaded Excel image.
+3.  **User**: Agrees to the proposed print feature.
+4.  *(Agent implements the printable bracket feature.)*
+5.  **Agent**: Announces completion and asks the user to test.
+6.  **User**: Reports that after redeploying, the previously added stage selector buttons on the management page have disappeared, expressing frustration.
+7.  *(Agent investigates, confirms the code is correct locally, and identifies it as a recurring deployment/caching issue.)*
+8.  **Agent**: Explains it's a platform issue, adds a version comment to force a rebuild, and advises the user to contact Emergent Support about the deployment problem.
+9.  **User**: It seems the support team sorted out the deployment problem, but it cost me more than 25 credits... at least the app works.
+10. **User**: States they will do a comprehensive test and report back.
 
 **Project Health Check:**
-- **Broken**: Knockout generation logic for odd numbers of participants.
-- **Mocked**: None.
+-   **Broken**: None in the codebase. The project's health is dependent on the stability of the deployment platform.
+-   **Mocked**: None.
 
 **3rd Party Integrations**
-- None.
+-   None.
 
 **Testing status**
-- **Testing agent used after significant changes**: YES, for the initial backend build of the championship feature.
-- **Troubleshoot agent used after agent stuck in loop**: NO.
-- **Test files created**: None. Testing was done via  and .
-- **Known regressions**: None.
+-   **Testing agent used after significant changes**: YES, for the initial BYE logic fix.
+-   **Troubleshoot agent used after agent stuck in loop**: NO.
+-   **Test files created**: A temporary test script  was created and used, but not saved as a permanent test file.
+-   **Known regressions**: A feature (stage selector) disappeared from production due to a deployment platform issue, but was not a code regression.
 
 **Credentials to test flow:**
-Register a new user account to test the full flow. A user  also exists in the database.
+-   **Email**: 
+-   **Password**: 
+-   **Admin Reset Code**: 
 
 **What agent forgot to execute**
-Nothing was forgotten. The agent correctly identified the bug reported by the user and began implementing a fix but has not completed it. The current task is a continuation of that fix.</analysis>
+-   The agent did not forget to execute any tasks. The primary challenges were external platform issues (deployment caching) which the agent correctly identified and escalated.</analysis>
